@@ -1,0 +1,1234 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- The above 3 meta tags *must* come first in the head; any other head content must come *after* these tags -->
+<meta name="description" content="This book discusses methods to implement intelligent reasoning by means of Prolog programs. The book is written from the shared viewpoints of Computational Logic, which aims at automating various kinds of reasoning, and Artificial Intelligence, which seeks to implement aspects of intelligent behaviour on a computer.">
+
+<!-- SWISH -->
+<link href="/web/css/lpn.css" rel="stylesheet">
+<link href="/web/css/jquery-ui.min.css" rel="stylesheet">
+<script src="/web/js/jquery.min.js"></script>
+<script src="/web/js/jquery-ui.min.js"></script>
+<script src="/web/js/lpn.js"></script>
+
+<!-- custom stylesheet -->
+<!--<link href="/web/css/custom.css" rel="stylesheet">-->
+
+    <!--Reveal.js-->
+    <link href="/web/css/reveal.css" rel="stylesheet">
+    <link href="/web/css/theme/simple.css" rel="stylesheet">
+
+    
+      <meta name=Title content="Simply Logical">
+    
+    
+      <meta name=author content="Peter Flach">
+    
+    
+    
+      <title>Simply Logical</title>
+    
+  </head>
+
+  <body>
+    <!--navibar-->
+
+    <div class="reveal" style="margin-top: -50px; padding-top: 50px;">
+      <div style="position: absolute; bottom: 1em; width: 100%; font-size: 0.4em; text-align: center;">
+        Peter Flach | http://www.cs.bris.ac.uk/~flach/SimplyLogical.html
+      </div>
+      <div class="slides">
+
+        
+        <section>
+        <h3>Interactive lab examples</h3>
+          <h4>Simply Logical</h4>
+        </section>
+        
+
+        
+  
+  <section>
+    
+    <section>
+      
+  
+    <h2>Chapter 1: A brief introduction to clausal logic</h2>
+  
+
+
+
+    </section>
+    
+    <section>
+      
+
+<p>In this chapter, we will introduce clausal logic as a formalism for representing and reasoning with knowledge. The aim of this chapter is to acquaint the reader with the most important concepts, without going into too much detail. The theoretical aspects of clausal logic, and the practical aspects of Logic Programming, will be discussed in Chapters 2 and 3.</p>
+    </section>
+    
+    <section>
+      
+  
+    <h3>The London Underground example</h3>
+  
+
+
+<p>
+Our Universe of Discourse in this chapter will be the London Underground, of which a small part is shown in fig. 1.1. We will try to capture this information in logical statements, describing which stations are directly connected by which lines. 
+</p>
+
+    </section>
+    
+    <section>
+      
+  
+    <h3>The London Underground example [cted]</h3>
+  
+
+
+
+
+
+<div class="extract figure" id="1.1">
+  <table align="center" cellpadding="0" cellspacing="0" hspace="0" vspace="0">
+    <tbody>
+      <tr>
+        <td align="left" class="AutoStyle04" valign="top">
+          <div class="AutoStyle05">
+            <p class="figure">
+              <img src="img/figure/image002.svg" v:shapes="_x0000_i1026" width="100%"/>
+            </p>
+          </div>
+          <p class="caption">
+            <b>Figure 1.1.</b> <p>Part of the London Underground. Reproduced by permission of London Regional Transport (LRT Registered User No. 94/1954).</p>
+          </p>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<div class="tip"><p>Zoom in on figures (or other display elements) by right-clicking or alt-clicking.</p></div>
+
+
+    </section>
+    
+    <section>
+      
+  
+    <h3>The London Underground example [cted]</h3>
+  
+
+
+
+
+<p>If we follow the lines from left to right (Northern downwards), we come up with the following 11 formulas:</p>
+
+<div class="extract swish" id="1.0.1">
+  <pre class="source swish temp AutoStyle03" data-variant-id="group-1" id="swish.1.0.1" query-text="?-connected(bond_street,Y,L). ?-connected(X,piccadilly_circus,L). ?-connected(X,Y,piccadilly). ?-connected(X,Y,L),connected(Y,Z,L).">
+connected(bond_street,oxford_circus,central).
+connected(oxford_circus,tottenham_court_road,central).
+connected(bond_street,green_park,jubilee).
+connected(green_park,charing_cross,jubilee).
+connected(green_park,piccadilly_circus,piccadilly).
+connected(piccadilly_circus,leicester_square,piccadilly).
+connected(green_park,oxford_circus,victoria).
+connected(oxford_circus,piccadilly_circus,bakerloo).
+connected(piccadilly_circus,charing_cross,bakerloo).
+connected(tottenham_court_road,leicester_square,northern).
+connected(leicester_square,charing_cross,northern).
+  </pre>
+</div>
+
+<div class="tip"><p>Clicking the cogwheel at the top right of the program box opens an interactive SWISH window, in which you can run queries against the given program. Press Run! to use the given query, look under Examples to see other suggested queries, and be sure to look beyond the first answer!</p></div>
+
+
+    </section>
+    
+    <section>
+      
+  
+    <h3>The London Underground example [cted]</h3>
+  
+
+
+
+
+<p>Let&rsquo;s define two stations to be <em>nearby</em> if they are on the same line, with at most one station in between. This relation can also be represented by a set of logical formulas:</p>
+
+<div class="extract swish" id="1.0.2">
+  <pre class="source swish temp AutoStyle03" data-variant-id="group-1" id="swish.1.0.2" query-text="?-nearby(bond_street,Y). ?-nearby(X,piccadilly_circus). ?-nearby(X,Y). ?-nearby(X,Y),nearby(Y,Z).">
+nearby(bond_street,oxford_circus).
+nearby(oxford_circus,tottenham_court_road).
+nearby(bond_street,tottenham_court_road).
+nearby(bond_street,green_park).
+nearby(green_park,charing_cross).
+nearby(bond_street,charing_cross).
+nearby(green_park,piccadilly_circus).
+nearby(piccadilly_circus,leicester_square).
+nearby(green_park,leicester_square).
+nearby(green_park,oxford_circus).
+nearby(oxford_circus,piccadilly_circus).
+nearby(piccadilly_circus,charing_cross).
+nearby(oxford_circus,charing_cross).
+nearby(tottenham_court_road,leicester_square).
+nearby(leicester_square,charing_cross).
+nearby(tottenham_court_road,charing_cross).
+  </pre>
+</div>
+
+
+    </section>
+    
+    <section>
+      
+  
+    <h3>The London Underground example [cted]</h3>
+  
+
+
+
+
+<p>These 16 formulas have been derived from the previous 11 formulas in a systematic way. If <em>X</em> and <em>Y</em> are directly connected via some line <em>L</em>, then <em>X</em> and <em>Y</em> are nearby. Alternatively, if there is some <em>Z</em> in between, such that <em>X</em> and <em>Z</em> are directly connected via <em>L</em>, and <em>Z</em> and <em>Y</em> are also directly connected via <em>L</em>, then <em>X</em> and <em>Y</em> are also nearby. We can formulate this in logic as follows:</p>
+
+<div class="extract swish" id="1.0.3">
+  <pre class="source swish temp inherit AutoStyle03" data-variant-id="group-1" id="swish.1.0.3" inherit-id="swish.1.0.1" query-text="?-nearby(tottenham_court_road,leicester_square). ?-nearby(tottenham_court_road,W). ?-nearby(X,leicester_square).">
+nearby(X,Y):-connected(X,Y,L).
+nearby(X,Y):-connected(X,Z,L),connected(Z,Y,L).
+  </pre>
+</div>
+
+
+    </section>
+    
+    <section>
+      
+  
+    <h3>The London Underground example [cted]</h3>
+  
+
+
+
+
+<p>In these formulas, the symbol &lsquo; <code>:-</code> &rsquo; should be read as &lsquo;if&rsquo;, and the comma between <code>connected(X,Z,L)</code> and <code>connected(Z,Y,L)</code> should be read as &lsquo;and&rsquo;. The uppercase letters stand for universally quantified variables, such that, for instance, the second formula means:</p>
+<blockquote>
+<p><strong>For any values</strong> of <em>X</em>, <em>Y</em>, <em>Z</em> and <em>L</em>, <em>X</em> is nearby <em>Y</em> <strong>if</strong> <em>X</em> is directly connected to <em>Z</em> via <em>L</em>, <strong>and</strong> <em>Z</em> is directly connected to <em>Y</em> via <em>L</em>.</p>
+</blockquote>
+<p></p>
+
+    </section>
+    
+    <section>
+      
+  
+    <h3>The London Underground example [cted]</h3>
+  
+
+
+
+
+<p>It is sometimes convenient to treat variables not occurring to the left of the if-symbol &lsquo; <code>:-</code> &rsquo; as existentially quantified <em>within the if-part</em>, leading to the following (equivalent) reading: </p>
+<blockquote>
+<p><strong>For any values</strong> of <em>X</em> and <em>Y</em>, <em>X</em> is nearby <em>Y</em> <strong>if</strong> there exist values of <em>Z</em> and <em>L</em> such that <em>X</em> is directly connected to <em>Z</em> via <em>L</em>, <strong>and</strong> <em>Z</em> is directly connected to <em>Y</em> via <em>L</em>.
+</p>
+</blockquote>
+    </section>
+    
+    <section>
+      
+  
+    <h3>Facts and rules</h3>
+  
+
+
+<p>We now have two definitions of the nearby-relation, one which simply lists all pairs of stations that are nearby each other, and one in terms of direct connections. Logical formulas of the first type, such as</p>
+<pre><code class="Prolog">nearby(bond_street,oxford_circus).
+</code></pre>
+
+<p>will be called <em>facts</em>, and formulas of the second type, such as</p>
+<pre><code class="Prolog">nearby(X,Y):-connected(X,Z,L),connected(Z,Y,L).
+</code></pre>
+
+<p>will be called <em>rules</em>. </p>
+
+    </section>
+    
+    <section>
+      
+  
+    <h3>Facts and rules [cted]</h3>
+  
+
+
+
+
+<p>Facts express unconditional truths, while rules denote conditional truths, i.e. conclusions which can only be drawn when the premises are known to be true. 
+
+Rules are also called <em>clauses</em>, and the premises of a clause (the bit following the if-symbol &lsquo; <code>:-</code> &rsquo;) are also called the <em>body</em> of the clause, while the conclusion is called its <em>head</em>.
+</p>
+<p>Obviously, we want these two definitions to be <em>equivalent</em>: for each possible query, both definitions should give exactly the same answer. We will make this more precise in the next section.</p>
+
+    </section>
+    
+    <section>
+      
+  
+    <h3>Facts and rules [cted]</h3>
+  
+
+
+
+
+
+<div class="extract exercise" id="1.1">
+  <div class="AutoStyle06">
+    <p class="exercise AutoStyle07">
+      <i>Exercise 1.1.</i> <p>Two stations are &lsquo;not too far&rsquo; if they are on the same or a different line, with at most one station in between. Define rules for the predicate <code>not_too_far</code>.</p>
+
+      <p><div class="extract swish" id="1.0.4">
+  <pre class="source swish temp inherit AutoStyle03" data-variant-id="group-1" id="swish.1.0.4" inherit-id="swish.1.0.1" query-text="?-not_too_far(X,Y).">
+not_too_far(X,Y):-true. % replace 'true' with your definition
+not_too_far(X,Y):-true. % add more clauses as needed
+  </pre>
+</div></p>
+    </p>
+  </div>
+</div>
+    </section>
+    
+  </section>
+  
+  <section>
+    
+    <section>
+      
+  
+    <h3>1.1 Answering queries</h3>
+  
+
+
+
+    </section>
+    
+    <section>
+      
+
+<p>A <em>query</em> like &lsquo;which station is nearby Tottenham Court Road?&rsquo; will be written as</p>
+<pre><code class="Prolog">?-nearby(tottenham_court_road,W).
+</code></pre>
+
+<p>where the prefix &lsquo; <code>?-</code> &rsquo; indicates that this is a query rather than a fact. An <em>answer</em> to this query, e.g. &lsquo;Leicester Square&rsquo;, will be written { <code>W</code> &rarr; <code>leicester_square</code> }, indicating a <em>substitution</em> of values for variables, such that the statement in the query, i.e.</p>
+<pre><code class="Prolog">?-nearby(tottenham_court_road,leicester_square).
+</code></pre>
+
+<p>is true. </p>
+
+    </section>
+    
+    <section>
+      
+
+
+
+<p>Now, if the nearby-relation is defined by means of a list of facts, answers to queries are easily found: just look for a fact that <em>matches</em> the query, by which is meant that the fact and the query can be made identical by substituting values for variables in the query. Once we have found such a fact, we also have the substitution which constitutes the answer to the query.</p>
+    </section>
+    
+    <section>
+      
+  
+    <h3>Using rules to answer queries</h3>
+  
+
+
+<p>If rules are involved, query-answering can take several of these steps. For answering the query <code>?-nearby(tottenham_court_road,W)</code>, we match it with the conclusion of the rule</p>
+<pre><code class="Prolog">nearby(X,Y):-connected(X,Y,L)
+</code></pre>
+
+<p>yielding the substitution { <code>X</code> &rarr; <code>tottenham_court_road</code>, <code>Y</code> &rarr; <code>W</code> }. We then try to find an answer for the premises of the rule under this substitution, i.e. we try to answer the query</p>
+<pre><code class="Prolog">?-connected(tottenham_court_road,W,L).
+</code></pre>
+
+
+    </section>
+    
+    <section>
+      
+  
+    <h3>Using rules to answer queries [cted]</h3>
+  
+
+
+
+
+<p>That is, we can find a station nearby Tottenham Court Road, if we can find a station directly connected to it. This second query is answered by looking at the facts for direct connections, giving the answer { <code>W</code> &rarr; <code>leicester_square</code>, <code>L</code> &rarr; <code>northern</code> }. 
+Finally, since the variable <code>L</code> does not occur in the initial query, we just ignore it in the final answer, which becomes { <code>W</code> &rarr;
+ <code>leicester_square</code> } as above. </p>
+<p>In fig. 1.2, we give a graphical representation of this process. Since we are essentially <em>proving</em> that a statement follows logically from some other statements, this graphical representation is called a <em>proof tree</em>.</p>
+
+    </section>
+    
+    <section>
+      
+  
+    <h3>Using rules to answer queries [cted]</h3>
+  
+
+
+
+
+
+<div class="extract figure" id="1.2">
+  <table align="center" cellpadding="0" cellspacing="0" hspace="0" vspace="0">
+    <tbody>
+      <tr>
+        <td align="left" class="AutoStyle04" valign="top">
+          <div class="AutoStyle05">
+            <p class="figure">
+              <img src="img/figure/image004.svg" v:shapes="_x0000_i1026" width="100%"/>
+            </p>
+          </div>
+          <p class="caption">
+            <b>Figure 1.2.</b> <p>A proof tree for the query <code>?-nearby(tottenham_court_road,W)</code>.</p>
+          </p>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+    </section>
+    
+    <section>
+      
+  
+    <h3>Resolution</h3>
+  
+
+
+<p>The steps in fig. 1.2 follow a very general reasoning pattern:</p>
+<blockquote>
+<p>to answer a query <code>?-</code> $Q_1, Q_2, \ldots, Q_n$, find a rule $A$ <code>:-</code> $B_1, \ldots, B_m$ such that $A$ matches with $Q_1$, and answer the query <code>?-</code> $B_1, \ldots, B_m, Q_2, \ldots, Q_n$.</p>
+</blockquote>
+<p>This reasoning pattern is called <em>resolution</em>, and we will study it extensively in Chapters 2 and 3. Resolution adds a <strong>procedural interpretation</strong> to logical formulas, besides their declarative interpretation (they can be either true or false). Due to this procedural interpretation, logic can be used as a programming language. 
+
+</p>
+    </section>
+    
+    <section>
+      
+  
+    <h3>Proof by refutation</h3>
+  
+
+
+<p>The resolution proof process makes use of a technique that is known as <em>reduction to the absurd</em>: suppose that the formula to be proved is false, and show that this leads to a contradiction, thereby demonstrating that the formula to be proved is in fact true. Such a proof is also called a <em>proof by refutation</em>. </p>
+<p>For instance, if we want to know which stations are nearby Tottenham Court Road, we negate this statement, resulting in &lsquo;there are no stations nearby Tottenham Court Road&rsquo;. </p>
+
+    </section>
+    
+    <section>
+      
+  
+    <h3>Proof by refutation [cted]</h3>
+  
+
+
+
+
+<p>In logic, this is achieved by writing the statement as a rule with an empty conclusion, i.e. a rule for which the truth of its premises would lead to falsity:</p>
+<pre><code class="Prolog">:-nearby(tottenham_court_road,W).
+</code></pre>
+
+<p>Thus, the symbols &lsquo; <code>?-</code> &rsquo; and &lsquo; <code>:-</code> &rsquo; are in fact equivalent. </p>
+<p>A contradiction is found if resolution leads to the empty rule, of which the premises are always true (since there are none), but the conclusion is always false. Conventionally, the empty rule is written as &lsquo; &#9633; &rsquo;.</p>
+    </section>
+    
+    <section>
+      
+  
+    <h3>Success set</h3>
+  
+
+
+<p>At the beginning of this section, we posed the question: can we show that our two definitions of the nearby-relation are equivalent? As indicated before, the idea is that to be equivalent means to provide exactly the same answers to the same queries. To formalise this, we need some additional definitions. </p>
+<p>A <em>ground</em> fact is a fact without variables. Obviously, if <code>G</code> is a ground fact, the query <code>?-G</code> never returns a substitution as answer: either it <em>succeeds</em> (<code>G</code> does follow from the initial assumptions), or it <em>fails</em> (<code>G</code> does not). The set of ground facts <code>G</code> for which the query <code>?-G</code> succeeds is called the <em>success set</em>. </p>
+
+    </section>
+    
+    <section>
+      
+  
+    <h3>Success set [cted]</h3>
+  
+
+
+
+
+<p>Thus, the success set for our first definition of the nearby-relation consists simply of those 16 formulas, since they are ground facts already, and nothing else is derivable from them. The success set for the second definition of the nearby-relation is constructed by applying the two rules to the ground facts for connectedness. Thus we can say: two definitions of a relation are (procedurally) <em>equivalent</em> if they have the same success set (restricted to that relation).</p>
+
+    </section>
+    
+    <section>
+      
+  
+    <h3>Success set [cted]</h3>
+  
+
+
+
+
+
+<div class="extract exercise" id="1.2">
+  <div class="AutoStyle06">
+    <p class="exercise AutoStyle07">
+      <i>Exercise 1.2.</i> <p>Construct the proof trees for the query</p>
+
+      <p><code>?-nearby(W,charing_cross)</code>.</p>
+    </p>
+  </div>
+</div>
+    </section>
+    
+  </section>
+  
+  <section>
+    
+    <section>
+      
+  
+    <h3>1.2 Recursion</h3>
+  
+
+
+
+    </section>
+    
+    <section>
+      
+
+<p>Until now, we have encountered two types of logical formulas: facts and rules. There is a special kind of rule which deserves special attention: the rule which defines a relation in terms of itself. This idea of &lsquo;self-reference&rsquo;, which is called <em>recursion</em>, is also present in most procedural programming languages. </p>
+
+    </section>
+    
+    <section>
+      
+
+
+
+<p>Recursion is a bit difficult to grasp, but once you&rsquo;ve mastered it, you can use it to write very elegant programs, e.g.</p>
+<pre><code class="text">IF N=0
+THEN FAC:=1
+ELSE FAC:=N*FAC(N-1).
+</code></pre>
+
+<p>is a recursive procedure for calculating the factorial of a given number, written in a Pascal-like procedural language. However, in such languages <em>iteration</em> (looping a pre-specified number of times) is usually preferred over recursion, because it uses memory more efficiently.</p>
+    </section>
+    
+    <section>
+      
+  
+    <h3>Reachability as a recursive predicate</h3>
+  
+
+
+<p>In Prolog, however, recursion is the <strong>only</strong> looping structure<span class="CustomFootnote">
+  <a href="#_ftn1" name="_ftnref1" title="">
+      <span class="MsoFootnoteReference">
+        <span class="AutoStyle13">
+          <span class="AutoStyle14">
+            [1]
+          </span>
+        </span>
+     </span>
+   </a>
+</span>. (This does not necessarily mean that Prolog is always less efficient than a procedural language, because there are ways to write recursive loops that are just as efficient as iterative loops, as we will see in section 3.6.) </p>
+<p>Perhaps the easiest way to think about recursion is the following: an arbitrarily large chain is described by describing how one link in the chain is connected to the next. </p>
+
+    </section>
+    
+    <section>
+      
+  
+    <h3>Reachability as a recursive predicate [cted]</h3>
+  
+
+
+
+
+<p>For instance, let us define the relation of <em>reachability</em> in our underground example, where a station is reachable from another station if they are connected by one or more lines. We could define it by the following 20 ground facts:</p>
+
+<div class="extract swish" id="1.1.1">
+  <pre class="source swish temp AutoStyle03" data-variant-id="group-1" id="swish.1.1.1" query-text="?-reachable(bond_street,Y). ?-reachable(X,green_park). ?-reachable(X,Y).">
+reachable(bond_street,charing_cross).
+reachable(bond_street,green_park).
+reachable(bond_street,leicester_square).
+reachable(bond_street,oxford_circus).
+reachable(bond_street,piccadilly_circus).
+reachable(bond_street,tottenham_court_road).
+reachable(green_park,charing_cross).
+reachable(green_park,leicester_square).
+reachable(green_park,oxford_circus).
+reachable(green_park,piccadilly_circus).
+reachable(green_park,tottenham_court_road).
+reachable(leicester_square,charing_cross).
+reachable(oxford_circus,charing_cross).
+reachable(oxford_circus,leicester_square).
+reachable(oxford_circus,piccadilly_circus).
+reachable(oxford_circus,tottenham_court_road).
+reachable(piccadilly_circus,charing_cross).
+reachable(piccadilly_circus,leicester_square).
+reachable(tottenham_court_road,charing_cross).
+reachable(tottenham_court_road,leicester_square).
+  </pre>
+</div>
+
+
+    </section>
+    
+    <section>
+      
+  
+    <h3>Reachability as a recursive predicate [cted]</h3>
+  
+
+
+
+
+<p>Since any station is reachable from any other station by a route with at most two intermediate stations, we could instead use the following (non-recursive) definition:</p>
+<pre><code class="Prolog">reachable(X,Y):-connected(X,Y,L).
+reachable(X,Y):-connected(X,Z,L1),connected(Z,Y,L2).
+reachable(X,Y):-connected(X,Z1,L1),connected(Z1,Z2,L2),
+                connected(Z2,Y,L3).
+</code></pre>
+
+
+    </section>
+    
+    <section>
+      
+  
+    <h3>Reachability as a recursive predicate [cted]</h3>
+  
+
+
+
+
+<p>Of course, if we were to define the reachability relation for the entire London underground, we would need a lot more, longer and longer rules. Recursion is a much more convenient and natural way to define such chains of arbitrary length:</p>
+
+<div class="extract swish" id="1.1.2">
+  <pre class="source swish temp inherit AutoStyle03" data-variant-id="group-1" id="swish.1.1.2" inherit-id="swish.1.0.1" query-text="?-reachable(bond_street,Y). ?-reachable(X,green_park). ?-reachable(X,Y).">
+reachable(X,Y):-connected(X,Y,L).
+reachable(X,Y):-connected(X,Z,L),reachable(Z,Y).
+  </pre>
+</div>
+
+<p>The reading of the second rule is as follows: &lsquo; <em>Y</em> is reachable from <em>X</em> if <em>Z</em> is directly connected to <em>X</em> via line <em>L</em>, and <em>Y</em> is reachable from <em>Z</em> &rsquo;.</p>
+<p>We can now use this recursive definition to prove that Leicester Square is reachable from Bond Street (fig. 1.3). </p>
+
+    </section>
+    
+    <section>
+      
+  
+    <h3>Reachability as a recursive predicate [cted]</h3>
+  
+
+
+
+
+
+<div class="extract figure" id="1.3">
+  <table align="center" cellpadding="0" cellspacing="0" hspace="0" vspace="0">
+    <tbody>
+      <tr>
+        <td align="left" class="AutoStyle04" valign="top">
+          <div class="AutoStyle05">
+            <p class="figure">
+              <img src="img/figure/image006.svg" v:shapes="_x0000_i1026" width="100%"/>
+            </p>
+          </div>
+          <p class="caption">
+            <b>Figure 1.3.</b> <p>A proof tree for the query <code>?-reachable(bond_street,W)</code>.</p>
+          </p>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+    </section>
+    
+    <section>
+      
+  
+    <h3>Alternate proofs</h3>
+  
+
+
+<p>However, just as there are several routes from Bond Street to Leicester Square, there are several alternative proofs of the fact that Leicester Square is reachable from Bond Street. An alternative proof is given in fig. 1.4. </p>
+
+<div class="extract figure" id="1.4">
+  <table align="center" cellpadding="0" cellspacing="0" hspace="0" vspace="0">
+    <tbody>
+      <tr>
+        <td align="left" class="AutoStyle04" valign="top">
+          <div class="AutoStyle05">
+            <p class="figure">
+              <img src="img/figure/image008.svg" v:shapes="_x0000_i1026" width="100%"/>
+            </p>
+          </div>
+          <p class="caption">
+            <b>Figure 1.4.</b> <p>Alternative proof tree for the query <code>?-reachable(bond_street,W)</code>.</p>
+          </p>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+
+    </section>
+    
+    <section>
+      
+  
+    <h3>Alternate proofs [cted]</h3>
+  
+
+
+
+
+<p>The difference between these two proofs is that in the first proof we use the fact</p>
+<pre><code class="Prolog">connected(oxford_circus,tottenham_court_road,central).
+</code></pre>
+
+<p>while in the second proof we use</p>
+<pre><code class="Prolog">connected(oxford_circus,piccadilly_circus,bakerloo).
+</code></pre>
+
+<p>There is no reason to prefer one over the other, but since Prolog searches the given formulas top-down, it will find the first proof before the second. Thus, the order of the clauses determines the order in which answers are found. As we will see in Chapter 3, it sometimes even determines whether any answers are found at all.</p>
+
+    </section>
+    
+    <section>
+      
+  
+    <h3>Alternate proofs [cted]</h3>
+  
+
+
+
+
+
+<div class="extract exercise" id="1.3">
+  <div class="AutoStyle06">
+    <p class="exercise AutoStyle07">
+      <i>Exercise 1.3.</i> <p>Give a third proof tree for the answer <code>{ W → leicester_square }</code>, and change the order of the facts for connectedness, such that this proof tree is constructed first.</p>
+
+      
+    </p>
+  </div>
+</div>
+    </section>
+    
+    <section>
+      
+  
+    <h3>Search and backtracking</h3>
+  
+
+
+<p>In other words, Prolog&rsquo;s query-answering process is a <em>search process</em>, in which the answer depends on all the choices made earlier. </p>
+<p>A important point is that some of these choices may lead to a dead-end later. For example, if the recursive formula for the reachability relation had been tried before the non-recursive one, the bottom part of fig. 1.3 would have been as in fig. 1.5. This proof tree cannot be completed, because there are no answers to the query <code>?-reachable(charing_cross,W)</code>, as can easily be checked. Prolog has to recover from this failure by climbing up the tree, reconsidering previous choices. This search process, which is called <em>backtracking</em>, will be detailed in Chapter 5.</p>
+
+    </section>
+    
+    <section>
+      
+  
+    <h3>Search and backtracking [cted]</h3>
+  
+
+
+
+
+
+<div class="extract figure" id="1.5">
+  <table align="center" cellpadding="0" cellspacing="0" hspace="0" vspace="0">
+    <tbody>
+      <tr>
+        <td align="left" class="AutoStyle04" valign="top">
+          <div class="AutoStyle05">
+            <p class="figure">
+              <img src="img/figure/image010.svg" v:shapes="_x0000_i1026" width="100%"/>
+            </p>
+          </div>
+          <p class="caption">
+            <b>Figure 1.5.</b> <p>A failing proof tree.</p>
+          </p>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+    </section>
+    
+  </section>
+  
+  <section>
+    
+    <section>
+      
+  
+    <h3>1.3 Structured terms</h3>
+  
+
+
+
+    </section>
+    
+    <section>
+      
+
+<p>Finally, we illustrate the way Prolog can handle more complex datastructures, such as a list of stations representing a route. Suppose we want to redefine the reachability relation, such that it also specifies the intermediate stations. We could adapt the non-recursive definition of <code>reachable</code> as follows:</p>
+<pre><code class="Prolog">reachable0(X,Y):-connected(X,Y,L).
+reachable1(X,Y,Z):-connected(X,Z,L1),
+                   connected(Z,Y,L2).
+reachable2(X,Y,Z1,Z2):-connected(X,Z1,L1),
+                       connected(Z1,Z2,L2),
+                       connected(Z2,Y,L3).
+</code></pre>
+
+<p>The suffix of reachable indicates the number of intermediate stations; it is added to stress that relations with different number of arguments are really different relations, even if their names are the same. The problem now is that we have to know the number of intermediate stations in advance, before we can ask the right query. This is, of course, unacceptable.</p>
+    </section>
+    
+    <section>
+      
+  
+    <h3>Functors</h3>
+  
+
+
+<p>We can solve this problem by means of <em>functors</em>. A functor looks just like a mathematical function, but the important difference is that <em>functor expressions are never evaluated to determine a value</em>. Instead, they provide a way to name a complex object composed of simpler objects. </p>
+<p>For instance, a route with Oxford Circus and Tottenham Court Road as intermediate stations could be represented by</p>
+<pre><code class="Prolog">route(oxford_circus,tottenham_court_road)
+</code></pre>
+
+<p>Note that this is not a ground fact, but rather an argument for a logical formula. 
+
+    </section>
+    
+    <section>
+      
+  
+    <h3>Functors [cted]</h3>
+  
+
+
+
+The reachability relation can now be defined as follows:</p>
+
+<div class="extract swish" id="1.2.1">
+  <pre class="source swish temp inherit AutoStyle03" data-variant-id="group-1" id="swish.1.2.1" inherit-id="swish.1.0.1" query-text="?-reachable(oxford_circus,charing_cross,R).">
+reachable(X,Y,noroute):-connected(X,Y,L).
+reachable(X,Y,route(Z)):-connected(X,Z,L1),
+                         connected(Z,Y,L2).
+reachable(X,Y,route(Z1,Z2)):-connected(X,Z1,L1),
+                             connected(Z1,Z2,L2),
+                             connected(Z2,Y,L3).
+  </pre>
+</div>
+
+<p>The query <code>?-reachable(oxford_circus,charing_cross,R)</code> now has three possible answers:</p>
+<pre><code class="text">{ R → route(piccadilly_circus) }
+{ R → route(tottenham_court_road,leicester_square) }
+{ R → route(piccadilly_circus,leicester_square) }
+</code></pre>
+    </section>
+    
+    <section>
+      
+  
+    <h3>Functors, recursion, and trees</h3>
+  
+
+
+<p>As argued in the previous section, we prefer the recursive definition of the reachability relation, in which case we use functors in a somewhat different way.</p>
+
+<div class="extract swish" id="1.2.2_2">
+  <pre class="source swish temp inherit AutoStyle03" data-variant-id="group-1" id="swish.1.2.2_2" inherit-id="swish.1.0.1" query-text="?-reachable(oxford_circus,charing_cross,R).">
+reachable(X,Y,noroute):-connected(X,Y,L).
+reachable(X,Y,route(Z,R)):-connected(X,Z,L),
+                           reachable(Z,Y,R).
+  </pre>
+</div>
+
+
+    </section>
+    
+    <section>
+      
+  
+    <h3>Functors, recursion, and trees [cted]</h3>
+  
+
+
+
+
+<p>At first sight, there does not seem to be a big difference between this and the use of functors in the non-recursive program. However, the query</p>
+<pre><code class="Prolog">?-reachable(oxford_circus,charing_cross,R).
+</code></pre>
+
+<p>now has the following answers:</p>
+<pre><code class="text">{ R → route(tottenham_court_road,
+            route(leicester_square,noroute)) }
+{ R → route(piccadilly_circus,noroute) }
+{ R → route(piccadilly_circus,
+            route(leicester_square,noroute)) }
+</code></pre>
+
+
+    </section>
+    
+    <section>
+      
+  
+    <h3>Functors, recursion, and trees [cted]</h3>
+  
+
+
+
+
+<p>The functor <code>route</code> is now also recursive in nature: its first argument is a station, but <em>its second argument is again a route</em>. For instance, the object</p>
+<pre><code class="Prolog">route(tottenham_court_road,route(leicester_square,noroute))
+</code></pre>
+
+<p>can be pictured as in fig. 1.6. </p>
+
+<div class="extract figure" id="1.6">
+  <table align="center" cellpadding="0" cellspacing="0" hspace="0" vspace="0">
+    <tbody>
+      <tr>
+        <td align="left" class="AutoStyle04" valign="top">
+          <div class="AutoStyle05">
+            <p class="figure">
+              <img src="img/figure/image012.svg" v:shapes="_x0000_i1026" width="100%"/>
+            </p>
+          </div>
+          <p class="caption">
+            <b>Figure 1.6.</b> <p>A complex object as a tree.</p>
+          </p>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+
+    </section>
+    
+    <section>
+      
+  
+    <h3>Functors, recursion, and trees [cted]</h3>
+  
+
+
+
+
+<p>Such a figure is called a <em>tree</em> (we will have a lot more to say about trees in chapter 4). In order to find out the route represented by this complex object, we read the leaves of this tree from left to right, until we reach the &lsquo;terminator&rsquo; <code>noroute</code>. This would result in a linear notation like</p>
+<pre><code class="Prolog">[tottenham_court_road,leicester_square]
+</code></pre>
+    </section>
+    
+    <section>
+      
+  
+    <h3>Lists</h3>
+  
+
+
+<p>For user-defined functors, such a linear notation is not available. However, Prolog provides a built-in &lsquo;datatype&rsquo; called <em>lists</em>, for which both the tree-like notation and the linear notation may be used. </p>
+<p>The functor for lists is <code>.</code> (dot), which takes two arguments: the first element of the list (which may be any object), and the rest of the list (which must be a list). The list terminator is the special symbol <code>[]</code>, denoting the empty list. </p>
+
+    </section>
+    
+    <section>
+      
+  
+    <h3>Lists [cted]</h3>
+  
+
+
+
+
+<p>For instance, the term</p>
+<pre><code class="Prolog">.(a,.(b,.(c,[])))
+</code></pre>
+
+<p>denotes the list consisting of <code>a</code> followed by <code>b</code> followed by <code>c</code> (fig. 1.7). </p>
+
+<div class="extract figure" id="1.7">
+  <table align="center" cellpadding="0" cellspacing="0" hspace="0" vspace="0">
+    <tbody>
+      <tr>
+        <td align="left" class="AutoStyle04" valign="top">
+          <div class="AutoStyle05">
+            <p class="figure">
+              <img src="img/figure/image014.svg" v:shapes="_x0000_i1026" width="100%"/>
+            </p>
+          </div>
+          <p class="caption">
+            <b>Figure 1.7.</b> <p>The list <code>[a,b,c]</code> as a tree.</p>
+          </p>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+
+    </section>
+    
+    <section>
+      
+  
+    <h3>Lists [cted]</h3>
+  
+
+
+
+
+<p>Alternatively, we may use the linear notation, which uses square brackets:</p>
+<pre><code class="Prolog">[a,b,c]
+</code></pre>
+
+<p>To increase readability of the tree-like notation, instead of</p>
+<pre><code class="Prolog">.(First,Rest)
+</code></pre>
+
+<p>one can also write</p>
+<pre><code class="Prolog">[First|Rest]
+</code></pre>
+
+
+    </section>
+    
+    <section>
+      
+  
+    <h3>Lists [cted]</h3>
+  
+
+
+
+
+<p>Note that <code>Rest</code> is a list: e.g., <code>[a,b,c]</code> is the same list as <code>[a|[b,c]]</code>. <code>a</code> is called the <em>head</em> of the list, and <code>[b,c]</code> is called its <em>tail</em>. Finally, to a certain extent the two notations can be mixed: at the head of the list, you can write any number of elements in linear notation. For instance,</p>
+<pre><code class="Prolog">[First,Second,Third|Rest]
+</code></pre>
+
+<p>denotes a list with three or more elements.</p>
+
+    </section>
+    
+    <section>
+      
+  
+    <h3>Lists [cted]</h3>
+  
+
+
+
+
+
+<div class="extract exercise" id="1.4">
+  <div class="AutoStyle06">
+    <p class="exercise AutoStyle07">
+      <i>Exercise 1.4.</i> <p>A list is either the empty list <code>[]</code>, or a non-empty list <code>[First|Rest]</code> where <code>Rest</code> is a list. Define a relation <code>list(L)</code>, which checks whether <code>L</code> is a list. Adapt it such that it succeeds only for lists of (<em>i</em>) even length and (<em>ii</em>) odd length.</p>
+
+      
+    </p>
+  </div>
+</div>
+    </section>
+    
+    <section>
+      
+  
+    <h3>Reachability with lists)</h3>
+  
+
+
+<p>The recursive nature of such datastructures makes it possible to ignore the size of the objects, which is extremely useful in many situations. For instance, the definition of a route between two underground stations does not depend on the length of the route; all that matters is whether there is an intermediate station or not. For both cases, there is a clause. </p>
+<p>Expressing the route as a list, we can state the final definition of the reachability relation:</p>
+
+<div class="extract swish" id="1.2.3">
+  <pre class="source swish temp inherit AutoStyle03" data-variant-id="group-1" id="swish.1.2.3" inherit-id="swish.1.0.1" query-text="?-reachable(oxford_circus,charing_cross,R). ?-reachable(X,charing_cross,[A,B,C,D]). ?-reachable(bond_street,piccadilly_circus,[A,B|L]).">
+reachable(X,Y,[]):-connected(X,Y,L).
+reachable(X,Y,[Z|R]):-connected(X,Z,L),
+                      reachable(Z,Y,R).
+  </pre>
+</div>
+
+
+    </section>
+    
+    <section>
+      
+  
+    <h3>Reachability with lists) [cted]</h3>
+  
+
+
+
+
+<p>The query <code>?-reachable(oxford_circus,charing_cross,R)</code> now results in the following answers:</p>
+<pre><code class="text">{ R → [tottenham_court_road,leicester_square] }
+{ R → [piccadilly_circus] }
+{ R → [piccadilly_circus, leicester_square] }
+</code></pre>
+
+<p>Note that Prolog writes out lists of fixed length in the linear notation.</p>
+    </section>
+    
+    <section>
+      
+  
+    <h3>Pattern matching with lists</h3>
+  
+
+
+<p>Should we for some reason want to know from which station Charing Cross can be reached via a route with four intermediate stations, we should ask the query</p>
+<pre><code class="Prolog">?-reachable(X,charing_cross,[A,B,C,D])
+</code></pre>
+
+<p>which results in two answers:</p>
+<pre><code class="text">{ X → bond_street , A → green_park , B → oxford_circus , 
+  C → tottenham_court_road , D → leicester_square }
+{ X → bond_street , A → green_park , B → oxford_circus , 
+  C → piccadilly_circus , D → leicester_square }.
+</code></pre>
+
+
+    </section>
+    
+    <section>
+      
+  
+    <h3>Pattern matching with lists [cted]</h3>
+  
+
+
+
+
+
+<div class="extract exercise" id="1.5">
+  <div class="AutoStyle06">
+    <p class="exercise AutoStyle07">
+      <i>Exercise 1.5.</i> <p>Construct a query asking for a route from Bond Street to Piccadilly Circus with at least two intermediate stations.</p>
+
+      
+    </p>
+  </div>
+</div>
+    </section>
+    
+  </section>
+  
+  <section>
+    
+    <section>
+      
+  
+    <h3>1.4 What else is there to know about clausal logic?</h3>
+  
+
+
+
+    </section>
+    
+    <section>
+      
+
+<p>The main goal of this chapter has been to introduce the most important concepts in clausal logic, and how it can be used as a reasoning formalism. Needless to say, a subject like this needs a much more extensive and precise discussion than has been attempted here, and many important questions remain. </p>
+<p>To name a few:</p>
+<ul>
+<li>what are the limits of expressiveness of clausal logic, i.e. what can and what cannot be expressed?</li>
+<li>what are the limits of reasoning with clausal logic, i.e. what can and what cannot be (efficiently) computed?</li>
+<li>how are these two limits related: is it for instance possible to enhance reasoning by limiting expressiveness?</li>
+</ul>
+
+    </section>
+    
+    <section>
+      
+
+
+
+<p>In order to start answering such questions, we need to be more precise in defining what clausal logic is, what expressions in clausal logic mean, and how we can reason with them. That means that we will have to introduce some theory in the next chapter. This theory will not only be useful for a better understanding of Logic Programming, but it will also be the foundation for most of the topics in Part III (<em>Advanced reasoning techniques</em>).</p>
+    </section>
+    
+    <section>
+      
+
+<p>Another aim of Part I of this book is to teach the skill of programming in Prolog. For this, theory alone, however important, will not suffice. Like any programming language, Prolog has a number of built-in procedures and datastructures that you should know about. Furthermore, there are of course numerous programming techniques and tricks of the trade, with which the Prolog programmer should be familiar. These subjects will be discussed in Chapter 3. Together, Chapters 2 and 3 will provide a solid foundation for the rest of the book.</p>
+    </section>
+    
+    <section>
+      
+  
+    <h3>Want to practise more?</h3>
+  
+
+
+Go to <a href="https://swish.swi-prolog.org/example/movies.pl">https://swish.swi-prolog.org/example/movies.pl</a>.
+    </section>
+    
+  </section>
+  
+
+
+      </div>
+    </div>
+
+    <script>
+      $(function() { $(".swish").LPN({swish:"https://swish.simply-logical.space/"}); });
+    </script>
+
+    <script src="/web/lib/js/head.min.js"></script>
+    <script src="/web/js/reveal.js"></script>
+    <script>
+      Reveal.initialize({
+        history: true,
+        math: {
+          // mathjax: 'https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js',
+          config: 'TeX-AMS_HTML-full'
+        },
+
+        dependencies: [
+        { src: '/web/plugin/math/math.js', async: true },
+
+        // Interpret Markdown in <section> elements
+        { src: '/web/plugin/markdown/marked.js', condition: function() { return !!document.querySelector( '[data-markdown]' ); } },
+        { src: '/web/plugin/markdown/markdown.js', condition: function() { return !!document.querySelector( '[data-markdown]' ); } },
+          // Zoom in and out with Alt+click
+        { src: '/web/plugin/zoom-js/zoom.js', async: true },
+        // Speaker notes
+        { src: '/web/plugin/notes/notes.js', async: true },
+        // External HTML files
+        { src: '/web/plugin/external/external.js', condition: function() { return !!document.querySelector( '[data-external]' ); } }
+
+        ]
+      });
+    </script>
+
+    <div class="reveal" style="margin-top: -50px; padding-top: 50px;">
+  <div style="position: absolute; bottom: 1em; width: 100%; font-size: 0.4em; text-align: center;">
+    Peter Flach | http://www.cs.bris.ac.uk/~flach/SimplyLogical.html
+  </div>
+<div class="slides">
+
+  </body>
+
+</html>
