@@ -1,0 +1,2705 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- The above 3 meta tags *must* come first in the head; any other head content must come *after* these tags -->
+<meta name="description" content="This book discusses methods to implement intelligent reasoning by means of Prolog programs. The book is written from the shared viewpoints of Computational Logic, which aims at automating various kinds of reasoning, and Artificial Intelligence, which seeks to implement aspects of intelligent behaviour on a computer.">
+
+<!-- SWISH -->
+<link href="/web/css/lpn.css" rel="stylesheet">
+<link href="/web/css/jquery-ui.min.css" rel="stylesheet">
+<script src="/web/js/jquery.min.js"></script>
+<script src="/web/js/jquery-ui.min.js"></script>
+<script src="/web/js/lpn.js"></script>
+
+<!-- custom stylesheet -->
+<!--<link href="/web/css/custom.css" rel="stylesheet">-->
+
+    <!--Reveal.js-->
+    <link href="/web/css/reveal.css" rel="stylesheet">
+    <link href="/web/css/theme/simple.css" rel="stylesheet">
+
+    
+      <meta name=Title content="Simply Logical">
+    
+    
+      <meta name=author content="Peter Flach">
+    
+    
+    
+      <title>Simply Logical</title>
+    
+  </head>
+
+  <body>
+    <!--navibar-->
+
+    <div class="reveal" style="margin-top: -50px; padding-top: 50px;">
+      <div style="position: absolute; bottom: 1em; width: 100%; font-size: 0.4em; text-align: center;">
+        Peter Flach | http://www.cs.bris.ac.uk/~flach/SimplyLogical.html
+      </div>
+      <div class="slides">
+
+        
+        <section>
+        <h3>Interactive lab examples</h3>
+          <h4>Simply Logical</h4>
+        </section>
+        
+
+        
+  
+  <section>
+    
+    <section>
+      
+  
+    <h2>Chapter 2: Clausal logic and resolution:<br>theoretical backgrounds</h2>
+  
+
+
+
+    </section>
+    
+    <section>
+      
+  
+    <h3>Syntax, semantics, and proof theory</h3>
+  
+
+
+<p>In this chapter we develop a more formal view of Logic Programming by means of a rigorous treatment of clausal logic and resolution theorem proving. Any such treatment has three parts: syntax, semantics, and proof theory. </p>
+<ul>
+<li><em>Syntax</em> defines the logical language we are using, i.e. the alphabet, different kinds of &lsquo;words&rsquo;, and the allowed &lsquo;sentences&rsquo;. 
+
+    </section>
+    
+    <section>
+      
+  
+    <h3>Syntax, semantics, and proof theory (ctd.)</h3>
+  
+
+
+</li>
+<li><em>Semantics</em> defines, in some formal way, the meaning of words and sentences in the language. As with most logics, semantics for clausal logic is <em>truth-functional</em>, i.e. the meaning of a sentence is defined by specifying the conditions under which it is assigned certain <em>truth values</em> (in our case: <strong>true</strong> or <strong>false</strong>). </li>
+<li>Finally, <em>proof theory</em> specifies how we can obtain new sentences (theorems) from assumed ones (axioms) by means of pure symbol manipulation (inference rules).</li>
+</ul>
+    </section>
+    
+    <section>
+      
+  
+    <h3>Soundness and completeness</h3>
+  
+
+
+<p>Of these three, proof theory is most closely related to Logic Programming, because answering queries is in fact no different from proving theorems. In addition to proof theory, we need semantics for deciding whether the things we prove actually make sense. For instance, we need to be sure that the truth of the theorems is assured by the truth of the axioms. If our inference rules guarantee this, they are said to be <em>sound</em>. 
+
+    </section>
+    
+    <section>
+      
+  
+    <h3>Soundness and completeness (ctd.)</h3>
+  
+
+
+
+But this will not be enough, because sound inference rules can be actually very weak, and unable to prove anything of interest. We also need to be sure that the inference rules are powerful enough to eventually prove any possible theorem: they should be <em>complete</em>.</p>
+    </section>
+    
+    <section>
+      
+  
+    <h3>Meta-theory</h3>
+  
+
+
+<p>Concepts like soundness and completeness are called <em>meta-theoretical</em>, since they are not expressed <strong>in</strong> the logic under discussion, but rather belong to a theory <strong>about</strong> that logic (&lsquo;meta&rsquo; means above). Their significance is not merely theoretical, but extends to logic programming languages like Prolog. For example, if a logic programming language is unsound, it will give wrong answers to some queries; if it is incomplete, it will give no answer to some other queries. 
+
+    </section>
+    
+    <section>
+      
+  
+    <h3>Meta-theory (ctd.)</h3>
+  
+
+
+
+Ideally, a logic programming language should be sound and complete; in practice, this will not be the case. For instance, in the next chapter we will see that Prolog is both unsound and incomplete. This has been a deliberate design choice: a sound and complete Prolog would be much less efficient. Nevertheless, any Prolog programmer should know exactly the circumstances under which Prolog is unsound or incomplete, and avoid these circumstances in her programs.</p>
+    </section>
+    
+    <section>
+      
+  
+    <h3>What this chapter is about</h3>
+  
+
+
+<p>The structure of this chapter is as follows. We start with a very simple (propositional) logical language, and enrich this language in two steps to full clausal logic. For each of these three languages, we discuss syntax, semantics, proof theory, and meta-theory. We then discuss definite clause logic, which is the subset of clausal logic used in Prolog. Finally, we relate clausal logic to Predicate Logic, and show that they are essentially equal in expressive power.</p>
+    </section>
+    
+  </section>
+  
+  <section>
+    
+    <section>
+      
+  
+    <h3>2.1 Propositional clausal logic</h3>
+  
+
+
+
+    </section>
+    
+    <section>
+      
+  
+    <h3>Propositions</h3>
+  
+
+
+<p>Informally, a <em>proposition</em> is any statement which is either true or false, such as &lsquo;2 + 2 = 4&rsquo; or &lsquo;the moon is made of green cheese&rsquo;. These are the building blocks of propositional logic, the weakest form of logic.</p>
+    </section>
+    
+  </section>
+  
+  <section>
+    
+    <section>
+      
+  
+    <h4>Propositional Syntax</h4>
+  
+
+
+
+    </section>
+    
+    <section>
+      
+  
+    <h3>Atoms and clauses</h3>
+  
+
+
+<p>Propositions are abstractly denoted by <em>atoms</em>, which are single words starting with a lowercase character. For instance, <code>married</code> is an atom denoting the proposition &lsquo;he/she is married&rsquo;; similarly, <code>man</code> denotes the proposition &lsquo;he is a man&rsquo;. Using the special symbols &lsquo; <code>:-</code> &rsquo; (<strong>if</strong>), &lsquo; <code>;</code> &rsquo; (<strong>or</strong>) and &lsquo; <code>,</code> &rsquo; (<strong>and</strong>), we can combine atoms to form <em>clauses</em>. 
+    </section>
+    
+    <section>
+      
+  
+    <h3>Atoms and clauses (ctd.)</h3>
+  
+
+
+
+For instance,</p>
+<pre><code class="Prolog">married;bachelor:-man,adult
+</code></pre>
+
+<p>is a clause, with intended meaning: &lsquo;somebody is married <strong>or</strong> a bachelor <strong>if</strong> he is a man <strong>and</strong> an adult&rsquo;<span class="CustomFootnote">
+  <a href="#_ftn2" name="_ftnref2" title="">
+      <span class="MsoFootnoteReference">
+        <span class="AutoStyle13">
+          <span class="AutoStyle14">
+            [2]
+          </span>
+        </span>
+     </span>
+   </a>
+</span>. The part to the left of the if-symbol &lsquo; <code>:-</code> &rsquo; is called the <em>head</em> of the clause, and the right part is called the <em>body</em> of the clause. The head of a clause is always a disjunction (<strong>or</strong>) of atoms, and the body of a clause is always a conjunction (<strong>and</strong>).</p>
+
+    </section>
+    
+    <section>
+      
+  
+    <h3>Atoms and clauses (ctd.)</h3>
+  
+
+
+
+
+
+<div class="extract exercise" id="2.1">
+  <div class="AutoStyle06">
+    <p class="exercise AutoStyle07">
+      <i>Exercise 2.1.</i> <p>Translate the following statements into clauses, using the atoms <code>person</code>, <code>sad</code> and <code>happy</code>:<br></p>
+
+      <ol>
+<li>persons are happy or sad;</li>
+<li>no person is both happy and sad;</li>
+<li>sad persons are not happy;</li>
+<li>non-happy persons are sad.</li>
+</ol>
+    </p>
+  </div>
+</div>
+    </section>
+    
+    <section>
+      
+  
+    <h3>Programs</h3>
+  
+
+
+<p>A <em>program</em> is a set of clauses, each of them terminated by a period. The clauses are to be read conjunctively; for example, the program</p>
+<pre><code class="Prolog">woman;man:-human.
+human:-woman.
+human:-man.
+</code></pre>
+
+<p>has the intended meaning &lsquo;(<strong>if</strong> someone is human <strong>then</strong> she/he is a woman <strong>or</strong> a man) <strong>and</strong> (<strong>if</strong> someone is a woman <strong>then</strong> she is human) <strong>and</strong> (<strong>if</strong> someone is a man <strong>then</strong> he is human)&rsquo;, or, in other words, &lsquo;someone is human <strong>if and only if</strong> she/he is a woman <strong>or</strong> a man&rsquo;.</p>
+    </section>
+    
+  </section>
+  
+  <section>
+    
+    <section>
+      
+  
+    <h4>Propositional Semantics</h4>
+  
+
+
+
+    </section>
+    
+    <section>
+      
+  
+    <h3>Herbrand base and interpretation</h3>
+  
+
+
+<p>The <em>Herbrand base</em> of a program <em>P</em> is the set of atoms occurring in <em>P</em>. For the above program, the Herbrand base is { <code>woman</code>, <code>man</code>, <code>human</code> }. A <em>Herbrand interpretation</em> (or interpretation for short) for <em>P</em> is a mapping from the Herbrand base of <em>P</em> into the set of truth values { <strong>true</strong>, <strong>false</strong> }. For example, the mapping { <code>woman</code> &rarr; <strong>true</strong>, <code>man</code> &rarr; <strong>false</strong>, <code>human</code> &rarr; <strong>true</strong> } is a Herbrand interpretation for the above program. A Herbrand interpretation can be viewed as describing a possible state of affairs in the Universe of Discourse (in this case: &lsquo;she is a woman, she is not a man, she is human&rsquo;). 
+
+    </section>
+    
+    <section>
+      
+  
+    <h3>Herbrand base and interpretation (ctd.)</h3>
+  
+
+
+
+Since there are only two possible truth values in the semantics we are considering, we could abbreviate such mappings by listing only the atoms that are assigned the truth value <strong>true</strong>; by definition, the remaining ones are assigned the truth value <strong>false</strong>. Under this convention, which we will adopt in this book, a Herbrand interpretation is simply a subset of the Herbrand base. Thus, the previous Herbrand interpretation would be represented as { <code>woman</code>, <code>human</code> }.</p>
+    </section>
+    
+    <section>
+      
+  
+    <h3>Truth conditions</h3>
+  
+
+
+<p>Since a Herbrand interpretation assigns truth values to every atom in a clause, it also assigns a truth value to the clause as a whole. The rules for determining the truth value of a clause from the truth values of its atoms are not so complicated, if you keep in mind that the body of a clause is a conjunction of atoms, and the head is a disjunction. Consequently, the body of a clause is <strong>true</strong> if every atom in it is <strong>true</strong>, and the head of a clause is <strong>true</strong> if at least one atom in it is <strong>true</strong>. 
+
+    </section>
+    
+    <section>
+      
+  
+    <h3>Truth conditions (ctd.)</h3>
+  
+
+
+
+In turn, the truth value of the clause is determined by the truth values of head and body. There are four possibilities:</p>
+<ol>
+<li>the body is <strong>true</strong>, and the head is <strong>true</strong>;</li>
+<li>the body is <strong>true</strong>, and the head is <strong>false</strong>;</li>
+<li>the body is <strong>false</strong>, and the head is <strong>true</strong>;</li>
+<li>the body is <strong>false</strong>, and the head is <strong>false</strong>.</li>
+</ol>
+<p>The intended meaning of the clause is &lsquo; <strong>if</strong> body <strong>then</strong> head&rsquo;, which is obviously <strong>true</strong> in the first case, and <strong>false</strong> in the second case.</p>
+    </section>
+    
+    <section>
+      
+  
+    <h3>Positive and negative literals</h3>
+  
+
+
+<p>What about the remaining two cases? They cover statements like &lsquo; <strong>if</strong> the moon is made of green cheese <strong>then</strong> 2 + 2 = 4&rsquo;, in which there is no connection at all between body and head. One would like to say that such statements are neither <strong>true</strong> nor <strong>false</strong>. However, our semantics is not sophisticated enough to deal with this: it simply insists that clauses should be assigned a truth value in every possible interpretation. Therefore, we consider the clause to be <strong>true</strong> whenever its body is <strong>false</strong>. 
+
+    </section>
+    
+    <section>
+      
+  
+    <h3>Positive and negative literals (ctd.)</h3>
+  
+
+
+
+It is not difficult to see that under these truth conditions a clause is equivalent with the statement &lsquo;head <strong>or not</strong> body&rsquo;. For example, the clause <code>married;bachelor:-man,adult</code> can also be read as &lsquo;someone is married <strong>or</strong> a bachelor <strong>or not</strong> a man <strong>or not</strong> an adult&rsquo;. Thus, a clause is a disjunction of atoms, which are negated if they occur in the body of the clause. Therefore, the atoms in the body of the clause are often called <em>negative literals</em>, while those in the head of the clause are called <em>positive literals</em>.</p>
+    </section>
+    
+    <section>
+      
+  
+    <h3>Summary so far</h3>
+  
+
+
+<p>To summarise: a clause is assigned the truth value <strong>true</strong> in an interpretation, if and only if at least one of the following conditions is true: (<em>a</em>) at least one atom in the body of the clause is <strong>false</strong> in the interpretation (cases (3) and (4)), or (<em>b</em>) at least one atom in the head of the clause is <strong>true</strong> in the interpretation (cases (1) and (3)). If a clause is <strong>true</strong> in an interpretation, we say that the interpretation is a <em>model</em> for the clause. 
+
+    </section>
+    
+    <section>
+      
+  
+    <h3>Summary so far (ctd.)</h3>
+  
+
+
+
+An interpretation is a model for a program if it is a model for each clause in the program. For example, the above program has the following models: &empty; (the empty model, assigning <strong>false</strong> to every atom), { <code>woman</code>, <code>human</code> }, { <code>man</code>, <code>human</code> }, and { <code>woman</code>, <code>man</code>, <code>human</code> }. Since there are eight possible interpretations for a Herbrand base with three atoms, this means that the program contains enough information to rule out half of these.</p>
+    </section>
+    
+    <section>
+      
+  
+    <h3>Logical consequence</h3>
+  
+
+
+<p>Adding more clauses to the program means restricting its set of models. For instance, if we add the clause <code>woman</code> (a clause with an empty body) to the program, we rule out the first and third model, which leaves us with the models { <code>woman</code>, <code>human</code> }, and { <code>woman</code>, <code>man</code>, <code>human</code> }. Note that in both of these models, <code>human</code> is <strong>true</strong>. We say that <code>human</code> is a logical consequence of the set of clauses. In general, a clause <em>C</em> is a <em>logical consequence</em> of a program <em>P</em> if every model of the program is also a model of the clause; we write <em>P</em> &#8872; <em>C</em>.</p>
+
+    </section>
+    
+    <section>
+      
+  
+    <h3>Logical consequence (ctd.)</h3>
+  
+
+
+
+
+
+<div class="extract exercise" id="2.2">
+  <div class="AutoStyle06">
+    <p class="exercise AutoStyle07">
+      <i>Exercise 2.2.</i> <p>Given the program<br></p>
+
+      <p><code>married;bachelor:-man,adult.
+man.
+:-bachelor.</code>
+determine which of the following clauses are logical consequences of this program:<br>
+1. <code>married:-adult</code>;
+2. <code>married:-bachelor</code>;
+ 3. <code>bachelor:-man</code>;
+ 4. <code>bachelor:-bachelor</code>.</p>
+    </p>
+  </div>
+</div>
+    </section>
+    
+    <section>
+      
+  
+    <h3>Intended model</h3>
+  
+
+
+<p>Of the two remaining models, obviously { <code>woman</code>, <code>human</code> } is the intended one; but the program does not yet contain enough information to distinguish it from the non-intended model { <code>woman</code>, <code>man</code>, <code>human</code> }. We can add yet another clause, to make sure that the atom <code>man</code> is mapped to <strong>false</strong>. For instance, we could add</p>
+<pre><code class="Prolog">:-man
+</code></pre>
+
+<p>(it is not a man) or</p>
+<pre><code class="Prolog">:-man,woman
+</code></pre>
+
+<p>(nobody is both a man and a woman). 
+
+    </section>
+    
+    <section>
+      
+  
+    <h3>Intended model (ctd.)</h3>
+  
+
+
+
+However, explicitly stating everything that is false in the intended model is not always feasible. Consider, for example, an airline database consulted by travel agencies: we simply want to say that if a particular flight (i.e., a combination of plane, origin, destination, date and time) is not listed in the database, then it does not exist, instead of listing all the dates that a particular plane does <strong>not</strong> fly from Amsterdam to London.</p>
+    </section>
+    
+    <section>
+      
+  
+    <h3>Minimal model</h3>
+  
+
+
+<p>So, instead of adding clauses until a single model remains, we want to add a rule to our semantics which tells us which of the several models is the intended one. The airline example shows us that, in general, we only want to accept something as <strong>true</strong> if we are really forced to, i.e. if it is <strong>true</strong> in every possible model. This means that we should take the intersection of every model of a program in order to construct the intended model. In the example, this is { <code>woman</code>, <code>human</code> }. Note that this model is <em>minimal</em> in the sense that no subset of it is also a model. Therefore, this semantics is called a <em>minimal model semantics</em>.</p>
+    </section>
+    
+    <section>
+      
+  
+    <h3>Indefinite clauses</h3>
+  
+
+
+<p>Unfortunately, this approach is only applicable to a restricted class of programs. Consider the following program:</p>
+<pre><code class="Prolog">woman;man:-human.
+human.
+</code></pre>
+
+<p>This program has three models: { <code>woman</code>, <code>human</code> }, { <code>man</code>, <code>human</code> }, and { <code>woman</code>, <code>man</code>, <code>human</code> }. The intersection of these models is { <code>human</code> }, but this interpretation is not a model of the first clause! The program has in fact not one, but <strong>two</strong> minimal models, which is caused by the fact that the first clause has a disjunctive head. Such a clause is called <em>indefinite</em>, because it does not permit definite conclusions to be drawn.</p>
+    </section>
+    
+    <section>
+      
+  
+    <h3>Definite clauses</h3>
+  
+
+
+<p>On the other hand, if we would only allow <em>definite</em> clauses, i.e. clauses with a single positive literal, minimal models are guaranteed to be unique. We will deal with definite clauses in section 2.4, because Prolog is based on definite clause logic. In principle, this means that clauses like <code>woman;man:-human</code> are not expressible in Prolog. However, such a clause can be transformed into a &lsquo;pseudo-definite&rsquo; clause by moving one of the literals in the head to the body, extended with an extra negation. 
+
+    </section>
+    
+    <section>
+      
+  
+    <h3>Definite clauses (ctd.)</h3>
+  
+
+
+
+This gives the following two possibilities:</p>
+<pre><code class="Prolog">woman:-human,not(man).
+man:-human,not(woman).
+</code></pre>
+
+<p>In Prolog, we have to choose between these two clauses, which means that we have only an approximation of the original indefinite clause. Negation in Prolog is an important subject with many aspects. In Chapter 3, we will show how Prolog handles negation in the body of clauses. In Chapter 8, we will discuss particular applications of this kind of negation.</p>
+    </section>
+    
+  </section>
+  
+  <section>
+    
+    <section>
+      
+  
+    <h4>Propositional Proof theory</h4>
+  
+
+
+
+    </section>
+    
+    <section>
+      
+  
+    <h3>Computing logical consequence</h3>
+  
+
+
+<p>Recall that a clause <em>C</em> is a logical consequence of a program <em>P</em> (<em>P</em> &#8872; <em>C</em>) if every model of <em>P</em> is a model of <em>C</em>. Checking this condition is, in general, unfeasible. Therefore, we need a more efficient way of computing logical consequences, by means of inference rules. If <em>C</em> can be derived from <em>P</em> by means of a number of applications of such inference rules, we say that <em>C</em> can be <em>proved</em> from <em>P</em>. Such inference rules are purely syntactic, and do not refer to any underlying semantics.</p>
+    </section>
+    
+    <section>
+      
+  
+    <h3>Resolution</h3>
+  
+
+
+<p>The proof theory for clausal logic consists of a single inference rule called <em>resolution</em>. Resolution is a very powerful inference rule. Consider the following program:</p>
+<pre><code class="Prolog">married;bachelor:-man,adult.
+has_wife:-man,married.
+</code></pre>
+
+<p>This simple program has no less than 26 models, each of which needs to be considered if we want to check whether a clause is a logical consequence of it.</p>
+
+    </section>
+    
+    <section>
+      
+  
+    <h3>Resolution (ctd.)</h3>
+  
+
+
+
+
+
+<div class="extract exercise" id="2.3">
+  <div class="AutoStyle06">
+    <p class="exercise AutoStyle07">
+      <i>Exercise 2.3.</i> <p>Write down the six Herbrand interpretations that are not models of the program.</p>
+
+      
+    </p>
+  </div>
+</div>
+    </section>
+    
+    <section>
+      
+  
+    <h3>Resolving upon a literal</h3>
+  
+
+
+<p>The following clause is a logical consequence of this program:</p>
+<pre><code class="Prolog">has_wife;bachelor:-man,adult
+</code></pre>
+
+<p>By means of resolution, it can be produced in a single step. This step represents the following line of reasoning: &lsquo;if someone is a man and an adult, then he is a bachelor or married; but if he is married, he has a wife; therefore, if someone is a man and an adult, then he is a bachelor or he has a wife&rsquo;. 
+
+    </section>
+    
+    <section>
+      
+  
+    <h3>Resolving upon a literal (ctd.)</h3>
+  
+
+
+
+In this argument, the two clauses in the program are related to each other by means of the atom <code>married</code>, which occurs in the head of the first clause (a positive literal) and in the body of the second (a negative literal). The derived clause, which is called the <em>resolvent</em>, consists of all the literals of the two input clauses, except <code>married</code> (the literal <em>resolved upon</em>). The negative literal <code>man</code>, which occurs in both input clauses, appears only once in the derived clause. This process is depicted in fig. 2.1.</p>
+
+    </section>
+    
+    <section>
+      
+  
+    <h3>Resolving upon a literal (ctd.)</h3>
+  
+
+
+
+
+
+
+<div id="2.1">
+              <img src="img/figure/image016.svg" height="60%"/>
+          <p>
+            <b>Figure 2.1.</b> <p>A resolution step.</p>
+          </p>
+</div>
+
+    </section>
+    
+    <section>
+      
+  
+    <h3>Unfolding</h3>
+  
+
+
+<p>Resolution is most easily understood when applied to definite clauses. Consider the following program:</p>
+<pre><code class="Prolog">square:-rectangle,equal_sides.
+rectangle:-parallelogram,right_angles.
+</code></pre>
+
+<p>Applying resolution yields the clause</p>
+<pre><code class="Prolog">square:-parallelogram,right_angles,equal_sides
+</code></pre>
+
+
+    </section>
+    
+    <section>
+      
+  
+    <h3>Unfolding (ctd.)</h3>
+  
+
+
+
+
+<p>That is, the atom <code>rectangle</code> in the body of the first clause is replaced by the body of the second clause (which has <code>rectangle</code> as its head). This process is also referred to as <em>unfolding</em> the second clause into the first one (fig. 2.2).</p>
+
+
+<div id="2.2">
+              <img src="img/figure/image018.svg" height="60%"/>
+          <p>
+            <b>Figure 2.2.</b> <p>Resolution with definite clauses.</p>
+          </p>
+</div>
+
+    </section>
+    
+    <section>
+      
+  
+    <h3>Derivation</h3>
+  
+
+
+<p>A resolvent resulting from one resolution step can be used as input for the next. A <em>proof</em> or <em>derivation</em> of a clause <em>C</em> from a program <em>P</em> is a sequence of clauses such that each clause is either in the program, or the resolvent of two previous clauses, and the last clause is <em>C</em>. If there is a proof of <em>C</em> from <em>P</em>, we write <em>P</em> &#8866; <em>C</em>.</p>
+
+    </section>
+    
+    <section>
+      
+  
+    <h3>Derivation (ctd.)</h3>
+  
+
+
+
+
+
+<div class="extract exercise" id="2.4">
+  <div class="AutoStyle06">
+    <p class="exercise AutoStyle07">
+      <i>Exercise 2.4.</i> <p>Give a derivation of <code>friendly</code> from the following program:<br></p>
+
+      <p><code>happy;friendly:-teacher.
+friendly:-teacher,happy.
+teacher;wise.
+teacher:-wise.</code></p>
+    </p>
+  </div>
+</div>
+    </section>
+    
+  </section>
+  
+  <section>
+    
+    <section>
+      
+  
+    <h4>Propositional Meta-theory</h4>
+  
+
+
+
+    </section>
+    
+    <section>
+      
+  
+    <h3>Soundness of propositional resolution</h3>
+  
+
+
+<p>It is easy to show that propositional resolution is <strong>sound</strong>: you have to establish that every model for the two input clauses is a model for the resolvent. In our earlier example, every model of <code>married;bachelor:-man,adult</code> and <code>has_wife:-man,married</code> must be a model of <code>has_wife;bachelor:-man,adult</code>. 
+
+    </section>
+    
+    <section>
+      
+  
+    <h3>Soundness of propositional resolution (ctd.)</h3>
+  
+
+
+
+Now, the literal resolved upon (in this case <code>married</code>) is either assigned the truth value <strong>true</strong> or <strong>false</strong>. In the first case, every model of <code>has_wife:-man,married</code> is also a model of <code>has_wife:-man</code>; in the second case, every model of <code>married;bachelor:-man,adult</code> is also a model of <code>bachelor:-man,adult</code>. In both cases, these models are models of a subclause of the resolvent, which means that they are also models of the resolvent itself.</p>
+    </section>
+    
+    <section>
+      
+  
+    <h3>Incompleteness of propositional resolution</h3>
+  
+
+
+<p>In general, proving <strong>completeness</strong> is more complicated than proving soundness. Still worse, proving completeness of resolution is impossible, because resolution is not complete at all! 
+
+    </section>
+    
+    <section>
+      
+  
+    <h3>Incompleteness of propositional resolution (ctd.)</h3>
+  
+
+
+
+For instance, consider the clause <code>a:-a</code>. This clause is a so-called <em>tautology</em>: it is true under any interpretation. Therefore, any model of an arbitrary program <em>P</em> is a model for it, and thus <em>P</em> = <code>a:-a</code> for any program <em>P</em>. If resolution were complete, it would be possible to derive the clause <code>a:-a</code> from some program <em>P</em> in which the literal <code>a</code> doesn&rsquo;t even occur! It is clear that resolution is unable to do this.</p>
+    </section>
+    
+    <section>
+      
+  
+    <h3>A form of completeness</h3>
+  
+
+
+<p>However, this is not necessarily bad, because although tautologies follow from any set of clauses, they are not very interesting. Resolution makes it possible to guide the inference process, by implementing the question &lsquo;is <em>C</em> a logical consequence of <em>P</em>?&rsquo; rather than &lsquo;what are the logical consequences of <em>P</em>?&rsquo;. 
+
+    </section>
+    
+    <section>
+      
+  
+    <h3>A form of completeness (ctd.)</h3>
+  
+
+
+
+We will see that, although resolution is unable to generate every logical consequence of a set of clauses, it is complete in the sense that resolution can always determine whether a specific clause is a logical consequence of a set of clauses.</p>
+    </section>
+    
+    <section>
+      
+  
+    <h3>Reduction to the absurd</h3>
+  
+
+
+<p>The idea is analogous to a proof technique in mathematics called &lsquo;reduction to the absurd&rsquo;. Suppose for the moment that <em>C</em> consists of a single positive literal <code>a</code>; we want to know whether <em>P</em> &#8872; <code>a</code>, i.e. whether every model of <em>P</em> is also a model of <code>a</code>. It is easily checked that an interpretation is a model of <code>a</code> if, and only if, it is <strong>not</strong> a model of <code>:-a</code>. 
+    </section>
+    
+    <section>
+      
+  
+    <h3>Reduction to the absurd (ctd.)</h3>
+  
+
+
+
+Therefore, every model of <em>P</em> is a model of <code>a</code> if, and only if, there is no interpretation which is a model of both <code>:-a</code> and <em>P</em>. In other words, <code>a</code> is a logical consequence of <em>P</em> if, and only if, <code>:-a</code> and <em>P</em> are mutually <em>inconsistent</em> (don&rsquo;t have a common model). So, checking whether <em>P</em> &#8872; <code>a</code> is equivalent to checking whether <em>P</em> &cup; { <code>:-a</code> } is inconsistent.</p>
+    </section>
+    
+    <section>
+      
+  
+    <h3>Proof by refutation</h3>
+  
+
+
+<p>Resolution provides a way to check this condition. Note that, since an inconsistent set of clauses doesn&rsquo;t have a model, it trivially satisfies the condition that any model of it is a model of any other clause; therefore, an inconsistent set of clauses has every possible clause as its logical consequence. In particular, the absurd or <em>empty</em> clause, denoted by □<span class="CustomFootnote">
+  <a href="#_ftn3" name="_ftnref3" title="">
+      <span class="MsoFootnoteReference">
+        <span class="AutoStyle13">
+          <span class="AutoStyle14">
+            [3]
+          </span>
+        </span>
+     </span>
+   </a>
+</span>, is a logical consequence of an inconsistent set of clauses. Conversely, if □ is a logical consequence of a set of clauses, we know it must be inconsistent. 
+
+    </section>
+    
+    <section>
+      
+  
+    <h3>Proof by refutation (ctd.)</h3>
+  
+
+
+
+Now, resolution is complete in the sense that <em>if P set of clauses is inconsistent, it is always possible to derive □ by resolution</em>. Since resolution is sound, we already know that if we can derive □ then the input clauses must be inconsistent. So we conclude: <code>a</code> is a logical consequence of <em>P</em> if, and only if, the empty clause can be deduced by resolution from <em>P</em> augmented with <code>:-a</code>. This process is called <em>proof by refutation</em>, and resolution is called <em>refutation complete</em>.</p>
+    </section>
+    
+    <section>
+      
+  
+    <h3>Proving a clause by refutation</h3>
+  
+
+
+<p>This proof method can be generalised to the case where <em>B</em> is not a single atom. For instance, let us check by resolution that <code>a:-a</code> is a tautology, i.e. a logical consequence of any set of clauses. Logically speaking, this clause is equivalent to &lsquo; <code>a</code> <strong>or not</strong> <code>a</code> &rsquo;, the negation of which is &lsquo; <strong>not</strong> <code>a</code> <strong>and</strong> <code>a</code> &rsquo;, which is represented by two separate clauses <code>:-a</code> and <code>a</code>. Since we can derive the empty clause from these two clauses in a single resolution step without using any other clauses, we have in fact proved that <code>a:-a</code> is a logical consequence of an empty set of clauses, hence a tautology.</p>
+
+    </section>
+    
+    <section>
+      
+  
+    <h3>Proving a clause by refutation (ctd.)</h3>
+  
+
+
+
+
+
+<div class="extract exercise" id="2.5">
+  <div class="AutoStyle06">
+    <p class="exercise AutoStyle07">
+      <i>Exercise 2.5.</i> <p>Prove by refutation that <code>friendly:-has_friends</code> is a logical consequence of the following clauses:<br></p>
+
+      <p><code>happy:-has_friends.
+friendly:-happy.</code></p>
+    </p>
+  </div>
+</div>
+    </section>
+    
+    <section>
+      
+  
+    <h3>Proving consistency is harder</h3>
+  
+
+
+<p>Finally, we mention that although resolution can always be used to prove inconsistency of a set of clauses it is not always fit to prove the opposite, i.e. consistency of a set of clauses. For instance, <code>a</code> is not a logical consequence of <code>a:-a</code>; yet, if we try to prove the inconsistency of <code>:-a</code> and <code>a:-a</code> (which should fail) we can go on applying resolution forever! 
+
+    </section>
+    
+    <section>
+      
+  
+    <h3>Proving consistency is harder (ctd.)</h3>
+  
+
+
+
+The reason, of course, is that there is a loop in the system: applying resolution to <code>:-a</code> and <code>a:-a</code> again yields <code>:-a</code>. In this simple case it is easy to check for loops: just maintain a list of previously derived clauses, and do not proceed with clauses that have been derived previously.</p>
+    </section>
+    
+    <section>
+      
+  
+    <h3>Decidability</h3>
+  
+
+
+<p>However, as we will see, this is not possible in the general case of full clausal logic, which is <em>semi-decidable</em> with respect to the question &lsquo;is <em>B</em> a logical consequence of <em>A</em> &rsquo;: there is an algorithm which derives, in finite time, a proof if one exists, but there is no algorithm which, for any <em>A</em> and <em>B</em>, halts and returns &lsquo;no&rsquo; if no proof exists. The reason for this is that interpretations for full clausal logic are in general infinite. As a consequence, some Prolog programs may loop forever (just like some Pascal programs). 
+
+    </section>
+    
+    <section>
+      
+  
+    <h3>Decidability (ctd.)</h3>
+  
+
+
+
+One might suggest that it should be possible to check, just by examining the source code, whether a program is going to loop or not, but, as Alan Turing showed, this is, in general, impossible (the Halting Problem). That is, you can write programs for checking termination of programs, but for any such termination checking program you can write a program on which it will not terminate itself!</p>
+    </section>
+    
+  </section>
+  
+  <section>
+    
+    <section>
+      
+  
+    <h3>2.2 Relational clausal logic</h3>
+  
+
+
+
+    </section>
+    
+    <section>
+      
+  
+    <h3>Why we need variables</h3>
+  
+
+
+<p>Propositional clausal logic is rather coarse-grained, because it takes propositions (i.e. anything that can be assigned a truth value) as its basic building blocks. For example, it is not possible to formulate the following argument in propositional logic:</p>
+<blockquote>
+<p>Peter likes all his students<br />
+Maria is one of Peter&rsquo;s students<br />
+Therefore, Peter likes Maria</p>
+</blockquote>
+
+    </section>
+    
+    <section>
+      
+  
+    <h3>Why we need variables (ctd.)</h3>
+  
+
+
+
+
+<p>In order to formalise this type of reasoning, we need to talk about individuals like Peter and Maria, sets of individuals like Peter&rsquo;s students, and relations between individuals, such as &lsquo;likes&rsquo;. This refinement of propositional clausal logic leads us into relational clausal logic.</p>
+    </section>
+    
+  </section>
+  
+  <section>
+    
+    <section>
+      
+  
+    <h4>Relational Syntax</h4>
+  
+
+
+
+    </section>
+    
+    <section>
+      
+  
+    <h3>Constants, variables, and terms</h3>
+  
+
+
+<p>Individual names are called <em>constants</em>; we follow the Prolog convention of writing them as single words starting with a lowercase character (or as arbitrary strings enclosed in single quotes, like <code>'this is a constant'</code>). Arbitrary individuals are denoted by <em>variables</em>, which are single words starting with an uppercase character. Jointly, constants and variables are denoted as <em>terms</em>. A <em>ground</em> term is a term without variables<span class="CustomFootnote">
+  <a href="#_ftn4" name="_ftnref4" title="">
+      <span class="MsoFootnoteReference">
+        <span class="AutoStyle13">
+          <span class="AutoStyle14">
+            [4]
+          </span>
+        </span>
+     </span>
+   </a>
+</span>.</p>
+    </section>
+    
+    <section>
+      
+  
+    <h3>Predicates</h3>
+  
+
+
+<p>Relations between individuals are abstractly denoted by <em>predicates</em> (which follow the same notational conventions as constants). An <em>atom</em> is a predicate followed by a number of terms, enclosed in brackets and separated by commas, e.g. <code>likes(peter,maria)</code>. The terms between brackets are called the <em>arguments</em> of the predicate, and the number of arguments is the predicate&rsquo;s <em>arity</em>. The arity of a predicate is assumed to be fixed, and predicates with the same name but different arity are assumed to be different. A <em>ground</em> atom is an atom without variables.</p>
+    </section>
+    
+    <section>
+      
+  
+    <h3>Clauses and programs</h3>
+  
+
+
+<p>All the remaining definitions pertaining to the syntax of propositional clausal logic, in particular those of literal, clause and program, stay the same. So, the following clauses are meant to represent the above statements:</p>
+
+<div class="extract swish" id="2.2.1">
+  <pre class="source swish temp AutoStyle03" data-variant-id="group-1" id="swish.2.2.1" query-text="?-likes(peter,S). ?-likes(T,maria). ?-likes(T,S).">
+likes(peter,S):-student_of(S,peter).
+student_of(maria,peter).
+  </pre>
+</div>
+
+
+    </section>
+    
+    <section>
+      
+  
+    <h3>Clauses and programs (ctd.)</h3>
+  
+
+
+
+
+<p>The intended meaning of these clauses are, respectively, &lsquo; <strong>if</strong> <em>S</em> is a student of Peter <strong>then</strong> Peter likes <em>S</em> &rsquo;, &lsquo;Maria is a student of Peter&rsquo;, and &lsquo;Peter likes Maria&rsquo;. Clearly, we want our logic to be such that the third clause follows logically from the first two, and we want to be able to prove this by resolution. Therefore, we must extend the semantics and proof theory in order to deal with variables.</p>
+    </section>
+    
+  </section>
+  
+  <section>
+    
+    <section>
+      
+  
+    <h4>Relational Semantics</h4>
+  
+
+
+
+    </section>
+    
+    <section>
+      
+  
+    <h3>Herbrand universe and Herbrand base</h3>
+  
+
+
+<p>The <em>Herbrand universe</em> of a program <em>P</em> is the set of ground terms (i.e. constants) occurring in it. For the above program, the Herbrand universe is { <code>peter</code>, <code>maria</code> }. The Herbrand universe is the set of all individuals we are talking about in our clauses. The <em>Herbrand base</em> of <em>P</em> is the set of <strong>ground</strong> atoms that can be constructed using the predicates in <em>P</em> and the ground terms in the Herbrand universe. This set represents all the things we can say about the individuals in the Herbrand universe.</p>
+<!--<div class="extract infobox" id="logical_variables">
+ <table align="center" cellpadding="0" cellspacing="0" hspace="0" vspace="0">
+  <tr>
+   <td align="left" class="AutoStyle04" valign="top">
+    <div class="AutoStyle31">
+     <p class="inter-title AutoStyle32">
+      Logical variables
+     </p>
+     <p>Variables in clausal logic are very similar to variables in mathematical formulas: they are placeholders that can be substituted by arbitrary ground terms from the Herbrand universe. It is very important to notice that <em>logical variables are global within a clause</em> (i.e. if the variable occurs at several positions within a clause, it should be substituted everywhere by the same term), <em>but not within a program</em>. This can be clearly seen from the semantics of relational clausal logic, where grounding substitutions are applied to clauses rather than programs. As a consequence, variables in two different clauses are distinct by definition, even if they have the same name. It will sometimes be useful to rename the variables in clauses, such that no two clauses share a variable; this is called <em>standardising</em> the clauses <em>apart</em>.</p>
+    </div>
+   </td>
+  </tr>
+ </table>
+</div>-->
+    </section>
+    
+    <section>
+      
+  
+    <h3>Herbrand interpretation</h3>
+  
+
+
+<p>The Herbrand base of the above program is</p>
+<pre><code class="Prolog">{ likes(peter,peter), likes(peter,maria),
+  likes(maria,peter), likes(maria,maria),
+  student_of(peter,peter), student_of(peter,maria),
+  student_of(maria,peter), student_of(maria,maria) }
+</code></pre>
+
+<p>As before, a <em>Herbrand interpretation</em> is the subset of the Herbrand base whose elements are assigned the truth value <strong>true</strong>. For instance,</p>
+<pre><code class="Prolog">{likes(peter,maria), student_of(maria,peter)}
+</code></pre>
+
+<p>is an interpretation of the above program.</p>
+    </section>
+    
+    <section>
+      
+  
+    <h3>Substitutions</h3>
+  
+
+
+<p>Clearly, we want this interpretation to be a model of the program, but now we have to deal with the variables in the program. A <em>substitution</em> is a mapping from variables to terms. For example, { <code>S</code> &rarr; <code>maria</code> } and { <code>S</code> &rarr; <code>X</code> } are substitutions. A substitution can be <em>applied</em> to a clause, which means that all occurrences of a variable occurring on the lefthand side in a substitution are replaced by the term on the righthand side. 
+
+    </section>
+    
+    <section>
+      
+  
+    <h3>Substitutions (ctd.)</h3>
+  
+
+
+
+For instance, if <em>C</em> is the clause</p>
+<pre><code class="Prolog">likes(peter,S):-student_of(S,peter)
+</code></pre>
+
+<p>then the above substitutions yield the clauses</p>
+<pre><code class="Prolog">likes(peter,maria):-student_of(maria,peter)
+likes(peter,X):-student_of(X,peter)
+</code></pre>
+
+<p>Notice that the first clause is ground; it is said to be a <em>ground instance</em> of <em>C</em>, and the substitution { <code>S</code> &rarr; <code>maria</code> } is called a <em>grounding substitution</em>. All the atoms in a ground clause occur in the Herbrand base, so reasoning with ground clauses is just like reasoning with propositional clauses. 
+
+    </section>
+    
+    <section>
+      
+  
+    <h3>Substitutions (ctd.)</h3>
+  
+
+
+
+An interpretation is a model for a non-ground clause if it is a model for every ground instance of the clause. Thus, in order to show that</p>
+<pre><code class="Prolog">M = {likes(peter,maria), student_of(maria,peter)}
+</code></pre>
+
+<p>is a model of the clause <em>C</em> above, we have to construct the set of the ground instances of <em>C</em> over the Herbrand universe { <code>peter</code>, <code>maria</code> }, which is</p>
+<pre><code class="Prolog">{ likes(peter,maria):-student_of(maria,peter),
+  likes(peter,peter):-student_of(peter,peter) }
+</code></pre>
+
+<p>and show that <em>M</em> is a model of every element of this set.</p>
+
+    </section>
+    
+    <section>
+      
+  
+    <h3>Substitutions (ctd.)</h3>
+  
+
+
+
+
+
+<div class="extract exercise" id="2.6">
+  <div class="AutoStyle06">
+    <p class="exercise AutoStyle07">
+      <i>Exercise 2.6.</i> <p>How many models does <em>C</em> have over the Herbrand universe { <code>peter</code>, <code>maria</code> }?</p>
+
+      
+    </p>
+  </div>
+</div>
+    </section>
+    
+  </section>
+  
+  <section>
+    
+    <section>
+      
+  
+    <h4>Relational Proof theory</h4>
+  
+
+
+
+    </section>
+    
+    <section>
+      
+  
+    <h3>The need to avoid grounding</h3>
+  
+
+
+<p>Because reasoning with ground clauses is just like reasoning with propositional clauses, a naive proof method in relational clausal logic would apply grounding substitutions to every clause in the program before applying resolution. Such a method is naive, because a program has many different grounding substitutions, most of which do not lead to a resolution proof. For instance, if the Herbrand universe contains four constants, then a clause with two distinct variables has 16 different grounding substitutions, and a program consisting of three such clauses has 4096 different grounding substitutions.</p>
+    </section>
+    
+    <section>
+      
+  
+    <h3>Resolution with variables</h3>
+  
+
+
+<p>Instead of applying arbitrary grounding substitutions before trying to apply resolution, we will derive the required substitutions from the clauses themselves. Recall that in order to apply propositional resolution, the literal resolved upon should occur in both input clauses (positive in one clause and negative in the other). In relational clausal logic, atoms can contain variables. Therefore, we do not require that exactly the same atom occurs in both clauses; rather, we require that there is a pair of atoms <em>which can be made equal by substituting terms for variables</em>. 
+
+    </section>
+    
+    <section>
+      
+  
+    <h3>Resolution with variables (ctd.)</h3>
+  
+
+
+
+For instance, let <em>P</em> be the following program:</p>
+<pre><code class="Prolog">likes(peter,S):-student_of(S,peter).
+student_of(maria,T):-follows(maria,C),teaches(T,C).
+</code></pre>
+
+<p>The second clause is intended to mean: &lsquo;Maria is a student of any teacher who teaches a course she follows&rsquo;. From these two clauses we should be able to prove that &lsquo;Peter likes Maria <strong>if</strong> Maria follows a course taught by Peter&rsquo;. This means that we want to resolve the two clauses on the <code>student_of</code> literals.</p>
+    </section>
+    
+    <section>
+      
+  
+    <h3>Unification and unifiers</h3>
+  
+
+
+<p>The two atoms <code>student_of(S,peter)</code> and <code>student_of(maria,T)</code> can be made equal by replacing <code>S</code> by <code>maria</code> and <code>T</code> by <code>peter</code>, by means of the substitution { <code>S</code> &rarr; <code>maria</code>, <code>T</code> &rarr; <code>peter</code> }. This process is called <em>unification</em>, and the substitution is called a <em>unifier</em>. Applying this substitution yields the following two clauses:</p>
+<pre><code class="Prolog">likes(peter,maria):-student_of(maria,peter).
+student_of(maria,peter):-follows(maria,C),
+                         teaches(peter,C).
+</code></pre>
+
+<p>(Note that the second clause is not ground.) 
+
+    </section>
+    
+    <section>
+      
+  
+    <h3>Unification and unifiers (ctd.)</h3>
+  
+
+
+
+We can now construct the resolvent in the usual way, by dropping the literal resolved upon and combining the remaining literals, which yields the required clause</p>
+<pre><code class="Prolog">likes(peter,maria):-follows(maria,C),teaches(peter,C).
+</code></pre>
+
+
+    </section>
+    
+    <section>
+      
+  
+    <h3>Unification and unifiers (ctd.)</h3>
+  
+
+
+
+
+
+<div class="extract exercise" id="2.7">
+  <div class="AutoStyle06">
+    <p class="exercise AutoStyle07">
+      <i>Exercise 2.7.</i> <p>Write a clause expressing that Peter teaches all the first-year courses, and apply resolution to this clause and the above resolvent.</p>
+
+      
+    </p>
+  </div>
+</div>
+    </section>
+    
+    <section>
+      
+  
+    <h3>Logical consequence</h3>
+  
+
+
+<p>Consider the following two-clause program <em>P</em>&prime;:</p>
+<pre><code class="Prolog">likes(peter,S):-student_of(S,peter).
+student_of(X,T):-follows(X,C),teaches(T,C).
+</code></pre>
+
+<p>which differs from the previous program <em>P</em> in that the constant <code>maria</code> in the second clause has been replaced by a variable. Since this generalises the applicability of this clause from Maria to any of Peter&rsquo;s students, it follows that any model for <em>P</em>&prime; over a Herbrand universe including <code>maria</code> is also a model for <em>P</em>, and therefore <em>P</em>&prime; &models; <em>P</em>. 
+
+    </section>
+    
+    <section>
+      
+  
+    <h3>Logical consequence (ctd.)</h3>
+  
+
+
+
+In particular, this means that all the logical consequences of <em>P</em>&prime; are also logical consequences of <em>P</em>. For instance, we can again derive the clause</p>
+<pre><code class="Prolog">likes(peter,maria):-follows(maria,C),teaches(peter,C).
+</code></pre>
+
+<p>from <em>P</em>&prime; by means of the unifier { <code>S</code> &rarr; <code>maria</code>, <code>X</code> &rarr; <code>maria</code>, <code>T</code> &rarr; <code>peter</code> }.</p>
+    </section>
+    
+    <section>
+      
+  
+    <h3>Generality</h3>
+  
+
+
+<p>Unifiers are not necessarily grounding substitutions: the substitution { <code>X</code> &rarr; <code>S</code>, <code>T</code> &rarr; <code>peter</code> } also unifies the two <code>student_of</code> literals, and the two clauses then resolve to</p>
+<pre><code class="Prolog">  likes(peter,S):-follows(S,C),teaches(peter,C).
+</code></pre>
+
+
+    </section>
+    
+    <section>
+      
+  
+    <h3>Generality (ctd.)</h3>
+  
+
+
+
+
+<p>The first unifier replaces more variables by terms than strictly necessary, while the second contains only those substitutions that are needed to unify the two atoms in the input clauses. As a result, the first resolvent is a special case of the second resolvent, that can be obtained by means of the additional substitution { <code>S</code> &rarr; <code>maria</code> }. Therefore, the second resolvent is said to be <em>more general</em> than the first<span class="CustomFootnote">
+  <a href="#_ftn5" name="_ftnref5" title="">
+      <span class="MsoFootnoteReference">
+        <span class="AutoStyle13">
+          <span class="AutoStyle14">
+            [5]
+          </span>
+        </span>
+     </span>
+   </a>
+</span>. Likewise, the second unifier is called a more general unifier than the first.</p>
+    </section>
+    
+    <section>
+      
+  
+    <h3>Most general unifier</h3>
+  
+
+
+<p>As it were, more general resolvents summarise a lot of less general ones. It therefore makes sense to derive only those resolvents that are as general as possible, when applying resolution to clauses with variables. This means that we are only interested in a <em>most general unifier</em> (mgu) of two literals. Such an mgu, if it exists, is always unique, apart from an arbitrary renaming of variables (e.g. we could decide to keep the variable <code>X</code>, and replace <code>S</code> by <code>X</code>). If a unifier does not exist, we say that the two atoms are not unifiable. For instance, the atoms <code>student_of(maria,peter)</code> and <code>student_of(S,maria)</code> are not unifiable.</p>
+    </section>
+    
+    <section>
+      
+  
+    <h3>Proof by refutation</h3>
+  
+
+
+<p>As we have seen before, the actual proof method in clausal logic is proof by refutation. If we succeed in deriving the empty clause, then we have demonstrated that the set of clauses is inconsistent <em>under the substitutions that are needed for unification of literals</em>. 
+
+    </section>
+    
+    <section>
+      
+  
+    <h3>Proof by refutation (ctd.)</h3>
+  
+
+
+
+For instance, consider the program</p>
+
+<div class="extract swish" id="2.2.7">
+  <pre class="source swish temp AutoStyle03" data-variant-id="group-1" id="swish.2.2.7" query-text="?-likes(peter,N). ?-student_of(N,peter). ?-follows(N,C),teaches(peter,C). ?-teaches(peter,ai_techniques).">
+likes(peter,S):-student_of(S,peter).
+student_of(S,T):-follows(S,C),teaches(T,C).
+teaches(peter,ai_techniques).
+follows(maria,ai_techniques).
+  </pre>
+</div>
+
+<p>If we want to find out if there is anyone whom Peter likes, we add to the program the negation of this statement, i.e. &lsquo;Peter likes nobody&rsquo; or <code>:-likes(peter,N)</code>; this clause is called a <em>query</em> or a <em>goal</em>. We then try to refute this query by finding an inconsistency by means of resolution. A refutation proof is given in fig. 2.3. </p>
+
+    </section>
+    
+    <section>
+      
+  
+    <h3>Proof by refutation (ctd.)</h3>
+  
+
+
+
+
+
+
+<div id="2.3">
+              <img src="img/figure/image020.svg" height="60%"/>
+          <p>
+            <b>Figure 2.3.</b> <p>A refutation proof which finds someone whom Peter likes.</p>
+          </p>
+</div>
+
+
+
+    </section>
+    
+    <section>
+      
+  
+    <h3>Proof by refutation (ctd.)</h3>
+  
+
+
+
+
+<p>In this figure, which is called a <em>proof tree</em>, two clauses on a row are input clauses for a resolution step, and they are connected by lines to their resolvent, which is then again an input clause for a resolution step, together with another program clause. The mgu&rsquo;s are also shown. Since the empty clause is derived, the query is indeed refuted, but only under the substitution { <code>N</code> &rarr; <code>maria</code> }, which constitutes the <em>answer</em> to the query.</p>
+    </section>
+    
+    <section>
+      
+  
+    <h3>Multiple answers</h3>
+  
+
+
+<p>In general, a query can have several answers. For instance, suppose that Peter does not only like his students, but also the people his students like (and the people those people like, and &hellip;):</p>
+
+<div class="extract swish" id="2.2.8">
+  <pre class="source swish temp AutoStyle03" data-variant-id="group-1" id="swish.2.2.8" query-text="">
+likes(peter,S):-student_of(S,peter).
+likes(peter,Y):-likes(peter,X),likes(X,Y).
+likes(maria,paul).
+student_of(S,T):-follows(S,C),teaches(T,C).
+teaches(peter,ai_techniques).
+follows(maria,ai_techniques).
+  </pre>
+</div>
+
+<p>The query</p>
+
+<div class="extract swish" id="2.2.8_2">
+  <pre class="source swish temp AutoStyle03" data-variant-id="group-1" id="swish.2.2.8_2" query-text="">
+?-likes(peter,N).
+  </pre>
+</div>
+
+<p>will now have two answers.</p>
+
+    </section>
+    
+    <section>
+      
+  
+    <h3>Multiple answers (ctd.)</h3>
+  
+
+
+
+
+
+<div class="extract exercise" id="2.8">
+  <div class="AutoStyle06">
+    <p class="exercise AutoStyle07">
+      <i>Exercise 2.8.</i> <p>Draw the proof tree for the answer { <code>N</code> &rarr; <code>paul</code> }.</p>
+
+      
+    </p>
+  </div>
+</div>
+    </section>
+    
+  </section>
+  
+  <section>
+    
+    <section>
+      
+  
+    <h4>Relational Meta-theory</h4>
+  
+
+
+
+    </section>
+    
+    <section>
+      
+  
+    <h3>Everything is still finite</h3>
+  
+
+
+<p>As with propositional resolution, relational resolution is sound (i.e. it always produces logical consequences of the input clauses), refutation complete (i.e. it always detects an inconsistency in a set of clauses), but not complete (i.e. it does not always generate every logical consequence of the input clauses). An important characteristic of relational clausal logic is that the Herbrand universe (the set of individuals we can reason about) is always finite. Consequently, models are finite as well, and there are a finite number of different models for any program. 
+
+    </section>
+    
+    <section>
+      
+  
+    <h3>Everything is still finite (ctd.)</h3>
+  
+
+
+
+This means that, in principle, we could answer the question &lsquo;is <em>C</em> a logical consequence of <em>P</em>?&rsquo; by enumerating all the models of <em>P</em>, and checking whether they are also models of <em>C</em>. The finiteness of the Herbrand universe will ensure that this procedure always terminates. This demonstrates that relational clausal logic is decidable, and therefore it is (in principle) possible to prevent resolution from looping if no more answers can be found. As we will see in the next section, this does not hold for full clausal logic.</p>
+    </section>
+    
+  </section>
+  
+  <section>
+    
+    <section>
+      
+  
+    <h3>2.3 Full clausal logic</h3>
+  
+
+
+
+    </section>
+    
+    <section>
+      
+  
+    <h3>Abstract names</h3>
+  
+
+
+<p>Relational logic extends propositional logic by means of the logical variable, which enables us to talk about arbitrary un-named individuals. However, consider the following statement:</p>
+<blockquote>
+<p>Everybody loves somebody.</p>
+</blockquote>
+<p>The only way to express this statement in relational clausal logic, is by explicitly listing every pair of persons such that the first loves the second, e.g.</p>
+<pre><code class="Prolog">loves(peter,peter).
+loves(anna,paul).
+loves(paul,anna).
+</code></pre>
+
+
+    </section>
+    
+    <section>
+      
+  
+    <h3>Abstract names (ctd.)</h3>
+  
+
+
+
+
+<p>First of all, this is not a precise translation of the above statement into logic, because it is too explicit (e.g. the fact that Peter loves himself does not follow from the original statement). Secondly, this translation works only for <em>finite</em> domains, while the original statement also allows infinite domains. Many interesting domains are infinite, such as the set of natural numbers. 
+
+    </section>
+    
+    <section>
+      
+  
+    <h3>Abstract names (ctd.)</h3>
+  
+
+
+
+Full clausal logic allows us to reason about infinite domains by introducing more complex terms besides constants and variables. The above statement translates into full clausal logic as</p>
+<pre><code class="Prolog">loves(X,person_loved_by(X))
+</code></pre>
+
+<p>The fact <code>loves(peter,person_loved_by(peter))</code> is a logical consequence of this clause. Since we know that everybody loves somebody, there must exist someone whom Peter loves. 
+
+    </section>
+    
+    <section>
+      
+  
+    <h3>Abstract names (ctd.)</h3>
+  
+
+
+
+We have given this person the <em>abstract name</em></p>
+<pre><code class="Prolog">person_loved_by(peter)
+</code></pre>
+
+<p>without explicitly stating whom it is that Peter loves. As we will see, this way of composing complex names from simple names also gives us the possibility to reflect the structure of the domain in our logical formulas.</p>
+
+    </section>
+    
+    <section>
+      
+  
+    <h3>Abstract names (ctd.)</h3>
+  
+
+
+
+
+
+<div class="extract exercise" id="2.9">
+  <div class="AutoStyle06">
+    <p class="exercise AutoStyle07">
+      <i>Exercise 2.9.</i> <p>Translate to clausal logic:<br></p>
+
+      <ol>
+<li>every mouse has a tail;</li>
+<li>somebody loves everybody;</li>
+<li>every two numbers have a maximum.</li>
+</ol>
+    </p>
+  </div>
+</div>
+    </section>
+    
+  </section>
+  
+  <section>
+    
+    <section>
+      
+  
+    <h4>Full Clausal Syntax</h4>
+  
+
+
+
+    </section>
+    
+    <section>
+      
+  
+    <h3>Complex terms</h3>
+  
+
+
+<p>A <em>term</em> is either simple or complex. Constants and variables are <em>simple terms</em>. A <em>complex term</em> is a functor (which follows the same notational conventions as constants and predicates) followed by a number of terms, enclosed in brackets and separated by commas, e.g. <code>eldest_child_of(anna,paul)</code>. The terms between brackets are called the <em>arguments</em> of the functor, and the number of arguments is the functor&rsquo;s <em>arity</em>. Again, a <em>ground</em> term is a term without variables. All the other definitions (atom, clause, literal, program) are the same as for relational clausal logic.</p>
+    </section>
+    
+  </section>
+  
+  <section>
+    
+    <section>
+      
+  
+    <h4>Full Clausal Semantics</h4>
+  
+
+
+
+    </section>
+    
+    <section>
+      
+  
+    <h3>Herbrand universe</h3>
+  
+
+
+<p>Although there is no <strong>syntactic</strong> difference in full clausal logic between terms and atoms, their <strong>meaning</strong> and use is totally different, a fact which should be adequately reflected in the semantics. A term always denotes an individual from the domain, while an atom denotes a proposition about individuals, which can get a truth value. Consequently, we must change the definition of the Herbrand universe in order to accomodate for complex terms: given a program <em>P</em>, the <em>Herbrand universe</em> is the set of ground terms that can be constructed from the constants and functors in <em>P</em> (if <em>P</em> contains no constants, choose an arbitrary one). 
+
+    </section>
+    
+    <section>
+      
+  
+    <h3>Herbrand universe (ctd.)</h3>
+  
+
+
+
+For instance, let <em>P</em> be the program</p>
+
+<div class="extract swish" id="2.3.1">
+  <pre class="source swish temp AutoStyle03" data-variant-id="group-1" id="swish.2.3.1" query-text="?-plus(s(0),s(s(0)),Z). ?-plus(s(0),Y,s(s(s(0)))). ?-plus(X,s(s(0)),s(s(s(0)))). ?-plus(X,Y,Z).">
+plus(0,X,X).
+plus(s(X),Y,s(Z)):-plus(X,Y,Z).
+  </pre>
+</div>
+
+<p>then the Herbrand universe of <em>P</em> is { <code>0</code>, <code>s(0)</code>, <code>s(s(0))</code>, <code>s(s(s(0)))</code>, &hellip;}. Thus, as soon as a program contains a functor, the Herbrand universe (the set of individuals we can reason about) is an infinite set.</p>
+
+    </section>
+    
+    <section>
+      
+  
+    <h3>Herbrand universe (ctd.)</h3>
+  
+
+
+
+
+
+<div class="extract exercise" id="2.10">
+  <div class="AutoStyle06">
+    <p class="exercise AutoStyle07">
+      <i>Exercise 2.10.</i> <p>Determine the Herbrand universe of the following program:<br></p>
+
+      <p><div class="extract swish" id="2.3.2">
+  <pre class="source swish temp AutoStyle03" data-variant-id="group-1" id="swish.2.3.2" query-text="?-listlength([0,0,0],N). ?-listlength(L,s(s(0))). ?-listlength(L,N).">
+listlength([],0).
+listlength([_X|Y],s(L)):-listlength(Y,L).
+  </pre>
+</div></p>
+<p>(Hint: recall that <code>[]</code> is a constant, and that <code>[X|Y]</code> is an alternative notation for the complex term <code>.(X,Y)</code> with binary functor &lsquo; <code>.</code> &rsquo;!)</p>
+    </p>
+  </div>
+</div>
+    </section>
+    
+    <section>
+      
+  
+    <h3>Herbrand base</h3>
+  
+
+
+<p>The <em>Herbrand base</em> of <em>P</em> remains the set of ground atoms that can be constructed using the predicates in <em>P</em> and the ground terms in the Herbrand universe. For the above program, the Herbrand base is</p>
+<pre><code class="Prolog">{ plus(0,0,0), plus(s(0),0,0), …,
+  plus(0,s(0),0), plus(s(0),s(0),0), …,
+  …,
+  plus(s(0),s(s(0)),s(s(s(0)))), … }
+</code></pre>
+
+<!--<div class="extract infobox" id="unification_vs_evaluation">
+ <table align="center" cellpadding="0" cellspacing="0" hspace="0" vspace="0">
+  <tr>
+   <td align="left" class="AutoStyle04" valign="top">
+    <div class="AutoStyle31">
+     <p class="inter-title AutoStyle32">
+      Unification vs. evaluation
+     </p>
+     <p>Functors should not be confused with mathematical functions. Although both can be viewed as mappings from objects to objects, <em>an expression containing a functor is not evaluated</em> to determine the value of the mapping, as in mathematics. Rather, the outcome of the mapping is a name, which is determined by <em>unification</em>. For instance, given the complex term <code>person_loved_by(X)</code>, if we want to know the name of the object to which Peter is mapped, we unify <code>X</code> with <code>peter</code> to get <code>person_loved_by(peter)</code>; this ground term is not evaluated any further.</p>
+<p>This approach has the disadvantage that we introduce different names for individuals that might turn out to be identical, e.g. <code>person_loved_by(peter)</code> might be the same as <code>peter</code>. Consequently, reasoning about equality (of different names for the same object) is a problem in clausal logic. Several possible solutions exist, but they fall outside the scope of this book.</p>
+    </div>
+   </td>
+  </tr>
+ </table>
+</div>-->
+
+
+    </section>
+    
+    <section>
+      
+  
+    <h3>Herbrand base (ctd.)</h3>
+  
+
+
+
+
+<p>As before, a <em>Herbrand interpretation</em> is a subset of the Herbrand base, whose elements are assigned the truth value <strong>true</strong>. For instance,</p>
+<pre><code class="Prolog">{ plus(0,0,0), plus(s(0),0,s(0)), plus(0,s(0),s(0)) }
+</code></pre>
+
+<p>is an interpretation of the above program.</p>
+    </section>
+    
+    <section>
+      
+  
+    <h3>Models</h3>
+  
+
+
+<p>Is this interpretation also a model of the program? As in the propositional case, we define an interpretation to be a model of a program if it is a model of every ground instance of every clause in the program. But since the Herbrand universe is infinite, there are an infinite number of grounding substitutions, hence we must generate the ground clauses in a systematic way, e.g.</p>
+
+    </section>
+    
+    <section>
+      
+  
+    <h3>Models (ctd.)</h3>
+  
+
+
+
+
+<pre><code class="Prolog">plus(0,0,0)
+plus(s(0),0,s(0)):-plus(0,0,0)
+plus(s(s(0)),0,s(s(0))):-plus(s(0),0,s(0))
+plus(s(s(s(0))),0,s(s(s(0)))):-plus(s(s(0)),0,s(s(0)))
+…
+plus(0,s(0),s(0))
+plus(s(0),s(0),s(s(0))):-plus(0,s(0),s(0))
+plus(s(s(0)),s(0),s(s(s(0)))):-plus(s(0),s(0),s(s(0)))
+…
+plus(0,s(s(0)),s(s(0)))
+plus(s(0),s(s(0)),s(s(s(0)))):-plus(0,s(s(0)),s(s(0)))
+plus(s(s(0)),s(s(0)),s(s(s(s(0))))):-plus(s(0),s(s(0)),s(s(s(0))))
+…
+</code></pre>
+
+
+    </section>
+    
+    <section>
+      
+  
+    <h3>Models (ctd.)</h3>
+  
+
+
+
+
+<p>Now we can reason as follows: according to the first ground clause, <code>plus(0,0,0)</code> must be in any model; but then the second ground clause requires that <code>plus(s(0),0,s(0))</code> must be in any model, the third ground clause requires <code>plus(s(s(0)),0,s(s(0)))</code> to be in any model, and so on. 
+    </section>
+    
+    <section>
+      
+  
+    <h3>Models (ctd.)</h3>
+  
+
+
+
+Likewise, the second group of ground clauses demands that</p>
+<pre><code class="Prolog">plus(0,s(0),s(0))
+plus(s(0),s(0),s(s(0)))
+plus(s(s(0)),s(0),s(s(s(0))))
+…
+</code></pre>
+
+<p>are in the model; the third group of ground clauses requires that</p>
+<pre><code class="Prolog">plus(0,s(s(0)),s(s(0)))
+plus(s(0),s(s(0)),s(s(s(0))))
+plus(s(s(0)),s(s(0)),s(s(s(s(0)))))
+…
+</code></pre>
+
+<p>are in the model, and so forth.</p>
+    </section>
+    
+    <section>
+      
+  
+    <h3>Infinite models</h3>
+  
+
+
+<p>In other words, <em>every model of this program is necessarily infinite</em>. Moreover, as you should have guessed by now, it contains every ground atom such that the number of <code>s</code> &rsquo;s in the third argument equals the number of <code>s</code> &rsquo;s in the first argument <strong>plus</strong> the number of <code>s</code> &rsquo;s in the second argument. The way we generated this infinite model is particularly interesting, because it is essentially what was called the naive proof method in the relational case: generate all possible ground instances of program clauses by applying every possible grounding substitution, and then apply (propositional) resolution as long as you can. 
+
+    </section>
+    
+    <section>
+      
+  
+    <h3>Infinite models (ctd.)</h3>
+  
+
+
+
+While, in the case of relational clausal logic, there inevitably comes a point where applying resolution will not give any new results (i.e. you reach a <em>fixpoint</em>), in the case of full clausal logic with infinite Herbrand universe you can go on applying resolution forever. On the other hand, as we saw above, we get a clear idea of what the infinite model<span class="CustomFootnote">
+  <a href="#_ftn6" name="_ftnref6" title="">
+      <span class="MsoFootnoteReference">
+        <span class="AutoStyle13">
+          <span class="AutoStyle14">
+            [6]
+          </span>
+        </span>
+     </span>
+   </a>
+</span> we&rsquo;re constructing looks like, which means that it is still a fixpoint in some sense. There are mathematical techniques to deal with such infinitary fixpoints, but we will not dive into this subject here.</p>
+    </section>
+    
+    <section>
+      
+  
+    <h3>Models can be finite</h3>
+  
+
+
+<p>Although the introduction of only a single functor already results in an infinite Herbrand universe, models are not necessarily infinite. Consider the following program:</p>
+
+<div class="extract swish" id="2.3.2_2">
+  <pre class="source swish temp AutoStyle03" data-variant-id="group-1" id="swish.2.3.2_2" query-text="?-reachable(X,Y,R). ?-connected(X,Y,L).">
+reachable(oxford,charing_cross,piccadilly).
+reachable(X,Y,route(Z,R)):-
+  connected(X,Z,_L),
+  reachable(Z,Y,R).
+connected(bond_street,oxford,central).
+  </pre>
+</div>
+
+<p>with intended meaning &lsquo;Charing Cross is reachable from Oxford Circus via Piccadilly Circus&rsquo;, &lsquo; <strong>if</strong> <em>X</em> is connected to <em>Z</em> by line <em>L</em> <strong>and</strong> <em>Y</em> is reachable from <em>Z</em> via <em>R</em> <strong>then</strong> <em>Y</em> is reachable from <em>X</em> via a route consisting of <em>Z</em> and <em>R</em> &rsquo; and &lsquo;Bond Street is connected to Oxford Circus by the Central line&rsquo;. 
+
+    </section>
+    
+    <section>
+      
+  
+    <h3>Models can be finite (ctd.)</h3>
+  
+
+
+
+The minimal model of this program is the finite set</p>
+<pre><code class="Prolog">{ connected(bond_street,oxford,central),
+  reachable(oxford,charing_cross,piccadilly),
+  reachable(bond_street,charing_cross,route(oxford,piccadilly)) }
+</code></pre>
+    </section>
+    
+  </section>
+  
+  <section>
+    
+    <section>
+      
+  
+    <h4>Full Clausal Proof theory</h4>
+  
+
+
+
+    </section>
+    
+    <section>
+      
+  
+    <h3>Unification for complex terms</h3>
+  
+
+
+<p>Resolution for full clausal logic is very similar to resolution for relational clausal logic: we only have to modify the unification algorithm in order to deal with complex terms. For instance, consider the atoms</p>
+<pre><code class="Prolog">plus(s(0),X,s(X))
+</code></pre>
+
+<p>and</p>
+<pre><code class="Prolog">plus(s(Y),s(0),s(s(Y)))
+</code></pre>
+
+<p>Their mgu is { <code>Y</code> &rarr; <code>0</code>, <code>X</code> &rarr; <code>s(0)</code> }, yielding the atom</p>
+<pre><code class="Prolog">plus(s(0),s(0),s(s(0)))
+</code></pre>
+
+
+    </section>
+    
+    <section>
+      
+  
+    <h3>Unification for complex terms (ctd.)</h3>
+  
+
+
+
+
+<p>In order to find this mgu, we first of all have to make sure that the two atoms do not have any variables in common; if needed some of the variables should be renamed. Then, after making sure that both atoms contain the same predicate (with the same arity), we scan the atoms from left to right, searching for the first <strong>subterms</strong> at which the two atoms differ. In our example, these are <code>0</code> and <code>Y</code>. 
+
+    </section>
+    
+    <section>
+      
+  
+    <h3>Unification for complex terms (ctd.)</h3>
+  
+
+
+ 
+If one of these subterms is not a variable, then the two atoms are not unifiable; otherwise, substitute the other term for all occurrences of the variable in both atoms, and remember this partial substitution (in the above example: { <code>Y</code> &rarr; <code>0</code> }), because it is going to be part of the unifier we are constructing. Then, proceed with the next subterms at which the two atoms differ. Unification is finished when no such subterms can be found (the two atoms are made equal).</p>
+    </section>
+    
+    <section>
+      
+  
+    <h3>The occur check</h3>
+  
+
+
+<p>Although the two atoms initially have no variables in common, this may change during the unification process. Therefore, it is important that, before a variable is replaced by a term, we check whether the variable already occurs in that term; this is called the <em>occur check</em>. If the variable does not occur in the term by which it is to be replaced, everything is in order and we can proceed; if it does, the unification should fail, because it would lead to circular substitutions and infinite terms. 
+
+    </section>
+    
+    <section>
+      
+  
+    <h3>The occur check (ctd.)</h3>
+  
+
+
+ 
+To illustrate this, consider again the clause</p>
+<pre><code class="Prolog">loves(X,person_loved_by(X))
+</code></pre>
+
+<p>We want to know whether this implies that someone loves herself; thus, we add the query <code>:-loves(Y,Y)</code> to this clause and try to apply resolution. To this end, we must unify the two atoms. The first subterms at which they differ are the first arguments, so we apply the partial substitution <code>Y</code> &rarr; <code>X</code> to the two atoms, resulting in</p>
+<pre><code class="Prolog">loves(X,person_loved_by(X))
+</code></pre>
+
+<p>and</p>
+<pre><code class="Prolog">loves(X,X)
+</code></pre>
+
+
+    </section>
+    
+    <section>
+      
+  
+    <h3>The occur check (ctd.)</h3>
+  
+
+
+
+
+<p>The next subterms at which these atoms differ are their second arguments, one of which is a variable. Suppose that we ignore the fact that this variable, <code>X</code>, already occurs in the other term; we construct the substitution <code>X</code> &rarr; <code>person_loved_by(X)</code>. Now, we have reached the end of the two atoms, so unification has succeeded, we have derived the empty clause, and the answer to the query is</p>
+<pre><code class="Prolog">X → person_loved_by(person_loved_by(person_loved_by(…)))
+</code></pre>
+
+<p>which is an infinite term.</p>
+    </section>
+    
+    <section>
+      
+  
+    <h3>Resolution without occur check is unsound</h3>
+  
+
+
+<p>Now we have two problems. The first is that we did not define any semantics for infinite terms, because there are no infinite terms in the Herbrand base. But even worse, the fact that there exists someone who loves herself is not a logical consequence of the above clause! That is, this clause has models in which nobody loves herself. So, <em>unification without occur check would make resolution unsound</em>.</p>
+
+    </section>
+    
+    <section>
+      
+  
+    <h3>Resolution without occur check is unsound (ctd.)</h3>
+  
+
+
+
+
+
+<div class="extract exercise" id="2.11">
+  <div class="AutoStyle06">
+    <p class="exercise AutoStyle07">
+      <i>Exercise 2.11.</i> <p>If possible, unify the following pairs of terms:<br></p>
+
+      <ol>
+<li><code>plus(X,Y,s(Y))</code> and <code>plus(s(V),W,s(s(V)))</code>;</li>
+<li><code>length([X|Y],s(0))</code> and <code>length([V],V)</code>;</li>
+<li><code>larger(s(s(X)),X)</code> and <code>larger(V,s(V))</code>.</li>
+</ol>
+    </p>
+  </div>
+</div>
+    </section>
+    
+    <section>
+      
+  
+    <h3>Occur check omitted for practical reasons</h3>
+  
+
+
+<p>The disadvantage of the occur check is that it can be computationally very costly. Suppose that you need to unify <code>X</code> with a list of thousand elements, then the complete list has to be searched in order to check whether <code>X</code> occurs somewhere in it. Moreover, cases in which the occur check is needed often look somewhat exotic. Since the developers of Prolog were also taking the efficiency of the Prolog interpreter into consideration, they decided to omit the occur check from Prolog&rsquo;s unification algorithm. 
+
+    </section>
+    
+    <section>
+      
+  
+    <h3>Occur check omitted for practical reasons (ctd.)</h3>
+  
+
+
+ 
+On the whole, this makes Prolog unsound; but this unsoundness only occurs in very specific cases, and it is the duty of the programmer to avoid such cases. In case you really need sound unification, most available Prolog implementations provide it as a library routine, but you must build your own Prolog interpreter in order to incorporate it. In Chapter 3, we will see that this is in fact amazingly simple: it can even be done in Prolog!</p>
+    </section>
+    
+  </section>
+  
+  <section>
+    
+    <section>
+      
+  
+    <h4>Full Clausal Meta-theory</h4>
+  
+
+
+
+    </section>
+    
+    <section>
+      
+  
+    <h3>Sound, refutation complete, semi-decidable</h3>
+  
+
+
+<p>Most meta-theoretical results concerning full clausal logic have already been mentioned. Full clausal resolution is sound (as long as unification is performed with the occur check), refutation complete but not complete. Moreover, due to the possibility of infinite interpretations full clausal logic is only semi-decidable: that is, if <em>A</em> is a logical consequence of <em>B</em>, then there is an algorithm that will check this in finite time; however, if <em>A</em> is not a logical consequence of <em>B</em>, then there is no algorithm which is guaranteed to check this in finite time for arbitrary <em>A</em> and <em>B</em>.Consequently, there is no general way to prevent Prolog from looping if no (further) answers to a query can be found.</p>
+    </section>
+    
+  </section>
+  
+  <section>
+    
+    <section>
+      
+  
+    <h3>2.4 Definite clause logic</h3>
+  
+
+
+
+    </section>
+    
+    <section>
+      
+  
+    <h3>Why definite clauses?</h3>
+  
+
+
+<p>In the foregoing three sections, we introduced and discussed three variants of clausal logic, in order of increasing expressiveness. In this section, we will show how an additional restriction on each of these variants will significantly improve the efficiency of a computational reasoning system for clausal logic. This is the restriction to definite clauses, on which Prolog is based. 
+
+    </section>
+    
+    <section>
+      
+  
+    <h3>Why definite clauses? (ctd.)</h3>
+  
+
+
+ 
+On the other hand, this restriction also means that definite clause logic is less expressive than full clausal logic, the main difference being that clausal logic can handle negative information. If we allow negated literals in the body of a definite clause then we obtain a so-called general clause, which is probably the closest we can get to full clausal logic without having to sacrifice efficiency.</p>
+    </section>
+    
+    <section>
+      
+  
+    <h3>Indefinite clause example</h3>
+  
+
+
+<p>Consider the following program:</p>
+<pre><code class="Prolog">married(X);bachelor(X):-man(X),adult(X).
+man(peter).
+adult(peter).
+:-married(maria).
+:-bachelor(maria).
+man(paul).
+:-bachelor(paul).
+</code></pre>
+
+<p>There are many clauses that are logical consequences of this program. In particular, the following three clauses can be derived by resolution:</p>
+<pre><code class="Prolog">married(peter);bachelor(peter)
+:-man(maria),adult(maria)
+married(paul):-adult(paul)
+</code></pre>
+
+
+    </section>
+    
+    <section>
+      
+  
+    <h3>Indefinite clause example (ctd.)</h3>
+  
+
+
+
+
+
+<div class="extract exercise" id="2.12">
+  <div class="AutoStyle06">
+    <p class="exercise AutoStyle07">
+      <i>Exercise 2.12.</i> <p>Draw the proof tree for each of these derivations.</p>
+
+      
+    </p>
+  </div>
+</div>
+    </section>
+    
+    <section>
+      
+  
+    <h3>Direction in which clause is used</h3>
+  
+
+
+<p>In each of these derivations, the first clause in the program is used in a different way. In the first one, only literals in the body are resolved away; one could say that the clause is used from right to left. In the second derivation the clause is used from left to right, and in the third one literals from both the head and the body are resolved away. The way in which a clause is used in a resolution proof cannot be fixed in advance, because it depends on the thing we want to prove (the query in refutation proofs).</p>
+    </section>
+    
+    <section>
+      
+  
+    <h3>Fixing direction from right to left</h3>
+  
+
+
+<p>On the other hand, this indeterminacy substantially increases the time it takes to find a refutation. Let us decide for the moment to use clauses only in one direction, say from right to left. That is, we can only resolve the negative literals away in a clause, as in the first derivation above, but not the positive literals. But now we have a problem: how are we going to decide whether Peter is married or a bachelor? We are stuck with a clause with two positive literals, representing a disjunctive or <em>indefinite</em> conclusion.</p>
+    </section>
+    
+    <section>
+      
+  
+    <h3>Definite clause logic</h3>
+  
+
+
+<p>This problem can in turn be solved by requiring that clauses have exactly one positive literal, which leads us into <em>definite clause logic</em>. Consequently, a definite clause</p>
+<p>$$ A :- B_1,\ldots,B_n $$</p>
+<p>will always be used in the following way: $A$ is proved by proving each of $B_1$,&hellip;,$B_n$. This is called the <em>procedural interpretation</em> of definite clauses, and its simplicity makes the search for a refutation much more efficient than in the indefinite case. Moreover, it allows for an implementation which limits the amount of memory needed, as will be explained in more detail in Chapter 5.</p>
+    </section>
+    
+    <section>
+      
+  
+    <h3>General clauses</h3>
+  
+
+
+<p>But how do we express in definite clause logic that adult men are bachelors or married? Even if we read the corresponding indefinite clause from right to left only, it basically has two different procedural interpretations:</p>
+<ol>
+<li>to prove that someone is married, prove that he is a man and an adult, and prove that he is not a bachelor;</li>
+<li>to prove that someone is a bachelor, prove that he is a man and an adult, and prove that he is not married.</li>
+</ol>
+
+    </section>
+    
+    <section>
+      
+  
+    <h3>General clauses (ctd.)</h3>
+  
+
+
+
+
+<p>We should first choose one of these procedural interpretations, and then convert it into a &lsquo;pseudo-definite&rsquo; clause. In case (1), this would be</p>
+<pre><code class="Prolog">married(X):-man(X),adult(X),not bachelor(X)
+</code></pre>
+
+<p>and case (2) becomes</p>
+<pre><code class="Prolog">bachelor(X):-man(X),adult(X),not married(X)
+</code></pre>
+
+<p>These clauses do not conform to the syntax of definite clause logic, because of the negation symbol <code>not</code>. We will call them <em>general clause</em>s.</p>
+    </section>
+    
+    <section>
+      
+  
+    <h3>Dealing with negated literals</h3>
+  
+
+
+<p>If we want to extend definite clause logic to cover general clauses, we should extend resolution in order to deal with negated literals in the body of a clause. In addition, we should extend the semantics. This topic will be addressed in section 8.2. Without going into too much detail here, we will demonstrate that preferring a certain procedural interpretation corresponds to preferring a certain minimal model. 
+
+    </section>
+    
+    <section>
+      
+  
+    <h3>Dealing with negated literals (ctd.)</h3>
+  
+
+
+ 
+Reconsider the original indefinite clause</p>
+<pre><code class="Prolog">married(X);bachelor(X):-man(X),adult(X)
+</code></pre>
+
+<p>Supposing that <code>john</code> is the only individual in the Herbrand universe, and that <code>man(john)</code> and <code>adult(john)</code> are both true, then the models of this clause are</p>
+<pre><code class="Prolog">{man(john),adult(john),married(john)}
+{man(john),adult(john),bachelor(john)}
+{man(john),adult(john),married(john),bachelor(john)}
+</code></pre>
+
+
+    </section>
+    
+    <section>
+      
+  
+    <h3>Dealing with negated literals (ctd.)</h3>
+  
+
+
+
+
+<p>Note that the first <strong>two</strong> models are minimal, as is characteristic for indefinite clauses. If we want to make the clause definite, we should single out one of these two minimal models as the <em>intended</em> model. If we choose the first model, in which John is married but not a bachelor, we are actually preferring the general clause</p>
+<pre><code class="Prolog">married(X):-man(X),adult(X),not bachelor(X)
+</code></pre>
+
+<p>Likewise, the second model corresponds to the general clause</p>
+<pre><code class="Prolog">bachelor(X):-man(X),adult(X),not married(X)
+</code></pre>
+
+
+    </section>
+    
+    <section>
+      
+  
+    <h3>Dealing with negated literals (ctd.)</h3>
+  
+
+
+
+
+
+<div class="extract exercise" id="2.13">
+  <div class="AutoStyle06">
+    <p class="exercise AutoStyle07">
+      <i>Exercise 2.13.</i> <p>Write a clause for the statement &lsquo;somebody is innocent unless proven guilty&rsquo;, and give its intended model (supposing that <code>john</code> is the only individual in the Herbrand universe).</p>
+
+      
+    </p>
+  </div>
+</div>
+    </section>
+    
+    <section>
+      
+  
+    <h3>Negation as failure</h3>
+  
+
+
+<p>An alternative approach to general clauses is to treat <code>not</code> as a special Prolog predicate, as will be discussed in the next chapter. This has the advantage that we need not extend the proof theory and semantics to incorporate general clauses. However, a disadvantage is that in this way <code>not</code> can only be understood procedurally.</p>
+    </section>
+    
+  </section>
+  
+  <section>
+    
+    <section>
+      
+  
+    <h3>2.5 The relation between clausal logic and Predicate Logic</h3>
+  
+
+
+
+    </section>
+    
+    <section>
+      
+  
+    <h3>Predicate Logic</h3>
+  
+
+
+<p>Clausal logic is a formalism especially suited for automated reasoning. However, the form of logic usually presented in courses on Symbolic Logic is (first-order) Predicate Logic. Predicate logic is more expressive in the sense that statements expressed in Predicate Logic often result in shorter formulas than would result if they were expressed in clausal logic. 
+
+    </section>
+    
+    <section>
+      
+  
+    <h3>Predicate Logic (ctd.)</h3>
+  
+
+
+ 
+This is due to the larger vocabulary and less restrictive syntax of Predicate Logic, which includes quantifiers (&lsquo;for all&rsquo; (&forall;) and &lsquo;there exists&rsquo; (&exist;)),  and various logical connectives (conjunction (&and;), disjunction (&or;), negation (&not;), implication (&rarr;), and equivalence (&harr;)) which may occur anywhere within a formula.</p>
+    </section>
+    
+    <section>
+      
+  
+    <h3>Semantic equivalence</h3>
+  
+
+
+<p>Being syntactically quite different, clausal logic and Predicate Logic are semantically equivalent in the following sense: every set of clauses is, after minor modifications, a formula in Predicate Logic, and conversely, every formula in Predicate Logic can be rewritten to an &lsquo;almost&rsquo; equivalent set of clauses. 
+
+    </section>
+    
+    <section>
+      
+  
+    <h3>Semantic equivalence (ctd.)</h3>
+  
+
+
+ 
+Why then bother about Predicate Logic at all in this book? The main reason is that in Chapter 8, we will discuss an alternative semantics of logic programs, defined in terms of Predicate Logic. In this section, we will illustrate the semantic equivalence of clausal logic and Predicate Logic. We will assume a basic knowledge of the syntax and semantics of Predicate Logic.</p>
+    </section>
+    
+    <section>
+      
+  
+    <h3>Propositional case</h3>
+  
+
+
+<p>We start with the propositional case. Any clause like</p>
+<pre><code class="Prolog">married;bachelor:-man,adult
+</code></pre>
+
+<p>can be rewritten by reversing head and body and replacing the &lsquo;<code>:-</code>&rsquo; sign by an implication &lsquo;&rarr;&rsquo;, replacing &lsquo;<code>,</code>&rsquo; by a conjunction &lsquo;&and;&rsquo;, and replacing &lsquo;<code>;</code>&rsquo; by a disjunction &lsquo;&or;&rsquo;, which yields</p>
+<pre><code class="Prolog">man ∧ adult → married ∨ bachelor
+</code></pre>
+
+
+    </section>
+    
+    <section>
+      
+  
+    <h3>Propositional case (ctd.)</h3>
+  
+
+
+
+
+<p>By using the logical laws <em>A</em> &rarr; <em>B</em> &equiv; &not; <em>A</em> &or; <em>B</em> and &not; (<em>C</em> &and; <em>D</em>) &equiv; &not; <em>C</em> &or;&not; <em>D</em>, this can be rewritten into the logically equivalent formula</p>
+<pre><code>¬man ∨ ¬adult ∨ married ∨ bachelor
+</code></pre>
+
+<p>which, by the way, clearly demonstrates the origin of the terms <em>negative</em> literal and <em>positive</em> literal!</p>
+    </section>
+    
+    <section>
+      
+  
+    <h3>Conjunctive normal form</h3>
+  
+
+
+<p>A set of clauses can be rewritten by rewriting each clause separately, and combining the results into a single conjunction, e.g.</p>
+<pre><code class="Prolog">married;bachelor:-man,adult.
+has_wife:-man,married.
+</code></pre>
+
+<p>becomes</p>
+<pre><code class="Prolog">(¬man ∨ ¬adult ∨ married ∨ bachelor) ∧
+(¬man ∨ ¬married ∨ has_wife)
+</code></pre>
+
+<p>Formulas like these, i.e. conjunctions of disjunctions of atoms and negated atoms, are said to be in <em>conjunctive normal form</em> (CNF).</p>
+    </section>
+    
+    <section>
+      
+  
+    <h3>CNF is unique</h3>
+  
+
+
+<p>The term &lsquo;normal form&rsquo; here indicates that <em>every formula of Predicate Logic can be rewritten into a unique equivalent formula in conjunctive normal form</em>, and therefore to a unique equivalent set of clauses. 
+
+    </section>
+    
+    <section>
+      
+  
+    <h3>CNF is unique (ctd.)</h3>
+  
+
+
+ 
+For instance, the formula</p>
+<pre><code class="Prolog">(married ∨ ¬child) → (adult ∧ (man ∨ woman))
+</code></pre>
+
+<p>can be rewritten into CNF as (replace <em>A</em> &rarr; <em>B</em> by &not;<em>A</em> &or; <em>B</em>, push negations inside by means of De Morgan&rsquo;s laws: &not;(<em>C</em> &and;
+  <em>D</em>) &equiv; &not;<em>C</em> &or; &not;<em>D</em> and &not;(<em>C</em> &or; <em>D</em>) &equiv; &not;<em>C</em> &and; &not;<em>D</em>, and distribute &and; over &or; by means of (<em>A</em> &and; <em>B</em>) &or; <em>C</em> &equiv; (<em>A</em> &or; <em>C</em>) &and; (<em>B</em> &or; <em>C</em>)):</p>
+<pre><code class="Prolog">(¬married ∨ adult) ∧ (¬married ∨ man ∨ woman) ∧
+(child ∨ adult) ∧ (child ∨ man ∨ woman)
+</code></pre>
+
+<p>and hence into clausal form as</p>
+<pre><code class="Prolog">adult:-married.
+man;woman:-married.
+child;adult.
+child;man;woman.
+</code></pre>
+
+<p></p>
+<!--<div class="extract infobox" id="the_order_of_logics">
+ <table align="center" cellpadding="0" cellspacing="0" hspace="0" vspace="0">
+  <tr>
+   <td align="left" class="AutoStyle04" valign="top">
+    <div class="AutoStyle31">
+     <p class="inter-title AutoStyle32">
+      The order of logics
+     </p>
+     <p>A logic with propositions (statements that can be either true or false) as basic building blocks is called a propositional logic; a logic built on predicates is called a Predicate Logic. Since propositions can be viewed as nullary predicates (i.e. predicates without arguments), any propositional logic is also a Predicate Logic.</p>
+<p>A logic may or may not have variables for its basic building blocks. If it does not include such variables, both the logic and its building blocks are called <em>first-order</em>; this is the normal case. Thus, in first-order Predicate Logic, there are no predicate variables, but only first-order predicates.</p>
+<p>Otherwise, an <em>n</em><sup>th</sup> order logic has variables (and thus quantifiers) for its (<em>n</em>-1)<sup>th</sup> order building blocks. For instance, the statement</p>
+<blockquote>
+<p>&forall; <code>X</code> &forall; <code>Y</code>: <code>equal(X,Y)</code> &harr; <code>(</code> &forall; <code>P</code>: <code>P(X)</code> &harr; <code>P(Y))</code></p>
+</blockquote>
+<p>defining two individuals to be equal if they have the same properties, is a statement from second-order Predicate Logic, because <code>P</code> is a variable ranging over first-order predicates.</p>
+<p>Another example of a statement from second-order Predicate Logic is</p>
+<blockquote>
+<p>&forall; <code>P</code>: <code>transitive(P)</code> &harr; <code>(</code> &forall; <code>X</code> &forall; <code>Y</code> &forall; <code>Z</code>: <code>P(X,Y)</code> &and; <code>P(Y,Z)</code> &rarr; <code>P(X,Z))</code></p>
+</blockquote>
+<p>This statement defines the transitivity of binary relations. Since <code>transitive</code> has a second-order variable as argument, it is called a <em>second-order predicate</em>.</p>
+    </div>
+   </td>
+  </tr>
+ </table>
+</div>-->
+    </section>
+    
+    <section>
+      
+  
+    <h3>Full clausal logic</h3>
+  
+
+
+<p>For rewriting clauses from full clausal logic to Predicate Logic, we use the same rewrite rules as for propositional clauses. Additionally, we have to add universal quantifiers for every variable in the clause. 
+
+    </section>
+    
+    <section>
+      
+  
+    <h3>Full clausal logic (ctd.)</h3>
+  
+
+
+ 
+For example, the clause</p>
+<pre><code class="Prolog">reachable(X,Y,route(Z,R)):-
+    connected(X,Z,L),
+    reachable(Z,Y,R).
+</code></pre>
+
+<p>becomes</p>
+<blockquote>
+<p>&forall; <code>X</code> &forall; <code>Y</code> &forall; <code>Z</code> &forall; <code>R</code> &forall; <code>L:</code> &not;<code>connected(X,Z,L)</code> &or; &not;<code>reachable(Z,Y,R)</code> &or; <code>reachable(X,Y,route(Z,R))</code></p>
+</blockquote>
+    </section>
+    
+    <section>
+      
+  
+    <h3>From Predicate Logic to clauses</h3>
+  
+
+
+<p>The reverse process of rewriting a formula of Predicate Logic into an equivalent set of clauses is somewhat complicated if existential quantifiers are involved (the exact procedure is given as a Prolog program in Appendix B.1). An existential quantifier allows us to reason about individuals without naming them. 
+
+    </section>
+    
+    <section>
+      
+  
+    <h3>From Predicate Logic to clauses (ctd.)</h3>
+  
+
+
+ 
+For example, the statement &lsquo;everybody loves somebody&rsquo; is represented by the Predicate Logic formula</p>
+<pre><code class="Prolog">∀X ∃Y: loves(X,Y)
+</code></pre>
+
+<p>Recall that we translated this same statement into clausal logic as</p>
+<pre><code class="Prolog">loves(X,person_loved_by(X))
+</code></pre>
+
+<p>These two formulas are not logically equivalent! That is, the Predicate Logic formula has models like { <code>loves(paul,anna)</code> } which are <strong>not</strong> models of the clause. 
+
+    </section>
+    
+    <section>
+      
+  
+    <h3>From Predicate Logic to clauses (ctd.)</h3>
+  
+
+
+ 
+The reason for this is, that in clausal logic we are forced to introduce abstract names, while in Predicate Logic we are not (we use existential quantification instead). On the other hand, every model of the Predicate Logic formula, if not a model of the clause, can always be converted to a model of the clause, like { <code>loves(paul,person_loved_by(paul))</code> }. Thus, we have that the formula has a model if and only if the clause has a model (but not necessarily the same model).</p>
+    </section>
+    
+    <section>
+      
+  
+    <h3>Skolemisation</h3>
+  
+
+
+<p>So, existential quantifiers are replaced by functors. The arguments of the functor are given by the universal quantifiers in whose scope the existential quantifier occurs. In the above example, &exist; <code>Y</code> occurs within the scope of &forall; <code>X</code>, so we replace <code>Y</code> everywhere in the formula by <code>person_loved_by(X)</code>, where <code>person_loved_by</code> should be a <strong>new</strong> functor, not occurring anywhere else in the clause (or in any other clause). This new functor is called a <em>Skolem functor</em>, and the whole process is called <em>Skolemisation</em>. 
+    </section>
+    
+    <section>
+      
+  
+    <h3>Skolemisation (ctd.)</h3>
+  
+
+
+ 
+Note that, if the existential quantifier does not occur inside the scope of a universal quantifier, the Skolem functor does not get any arguments, i.e. it becomes a <em>Skolem constant</em>. For example, the formula</p>
+<pre><code class="Prolog">∃X ∀Y: loves(X,Y)
+</code></pre>
+
+<p>(&lsquo;somebody loves everybody&rsquo;) is translated to the clause</p>
+<pre><code class="Prolog">loves(someone_who_loves_everybody,X)
+</code></pre>
+    </section>
+    
+    <section>
+      
+  
+    <h3>An example</h3>
+  
+
+
+<p>Finally, we illustrate the whole process of converting from Predicate Logic to clausal logic by means of an example. Consider the sentence &lsquo;Everyone has a mother, but not every woman has a child&rsquo;. In Predicate Logic, this can be represented as</p>
+<pre><code class="Prolog">∀Y∃X: mother_of(X,Y) ∧ ¬∀Z∃W: woman(Z)→mother_of(Z,W)
+</code></pre>
+
+
+    </section>
+    
+    <section>
+      
+  
+    <h3>An example (ctd.)</h3>
+  
+
+
+
+
+<p>First, we push the negation inside by means of the equivalences &not;&forall;<em>X</em>: <em>F</em> &equiv; &exist;<em>X</em>: &not;<em>F</em> and &not;&exist;<em>Y</em>: <em>G</em> &equiv; &forall;<em>Y</em>: &not;<em>G</em>, and the previously given propositional equivalences, giving</p>
+<pre><code class="Prolog">∀Y∃X: mother_of(X,Y) ∧ ∃Z∀W: woman(Z) ∧ ¬mother_of(Z,W)
+</code></pre>
+
+
+    </section>
+    
+    <section>
+      
+  
+    <h3>An example (ctd.)</h3>
+  
+
+
+
+
+<p>The existential quantifiers are Skolemised: <code>X</code> is replaced by <code>mother(Y)</code>, because it is in the scope of the universal quantifier &forall;<code>Y</code>. <code>Z</code>, however, is not in the scope of a universal quantifier; therefore it is replaced by a Skolem constant <code>childless_woman</code>. The universal quantifiers can now be dropped:</p>
+<pre><code class="Prolog">mother_of(mother(Y),Y) ∧
+woman(childless_woman) ∧ ¬mother_of(childless_woman,W)
+</code></pre>
+
+
+    </section>
+    
+    <section>
+      
+  
+    <h3>An example (ctd.)</h3>
+  
+
+
+
+
+<p>This formula is already in CNF, so we obtain the following set of clauses:</p>
+<pre><code class="Prolog">mother_of(mother(Y),Y).
+woman(childless_woman).
+:-mother_of(childless_woman,W).
+</code></pre>
+
+
+    </section>
+    
+    <section>
+      
+  
+    <h3>An example (ctd.)</h3>
+  
+
+
+
+
+
+<div class="extract exercise" id="2.14">
+  <div class="AutoStyle06">
+    <p class="exercise AutoStyle07">
+      <i>Exercise 2.14.</i> <p>Translate to clausal logic:<br></p>
+
+      <ol>
+<li>&forall;<code>X</code>&exist;<code>Y: mouse(X)</code> &rarr; <code>tail_of(Y,X)</code>;</li>
+<li>&forall;<code>X</code>&exist;<code>Y: loves(X,Y)</code> &and; <code>(</code> &forall;<code>Z: loves(Y,Z))</code>;</li>
+<li>&forall;<code>X</code>&forall;<code>Y</code>&exist;<code>Z: number(X)</code> &and; <code>number(Y)</code> &rarr; <code>maximum(X,Y,Z)</code>.</li>
+</ol>
+    </p>
+  </div>
+</div>
+    </section>
+    
+  </section>
+  
+
+
+      </div>
+    </div>
+
+    <script>
+      $(function() { $(".swish").LPN({swish:"https://swish.simply-logical.space/"}); });
+    </script>
+
+    <script src="/web/lib/js/head.min.js"></script>
+    <script src="/web/js/reveal.js"></script>
+    <script>
+      Reveal.initialize({
+        history: true,
+        math: {
+          // mathjax: 'https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js',
+          config: 'TeX-AMS_HTML-full'
+        },
+
+        dependencies: [
+        { src: '/web/plugin/math/math.js', async: true },
+
+        // Interpret Markdown in <section> elements
+        { src: '/web/plugin/markdown/marked.js', condition: function() { return !!document.querySelector( '[data-markdown]' ); } },
+        { src: '/web/plugin/markdown/markdown.js', condition: function() { return !!document.querySelector( '[data-markdown]' ); } },
+          // Zoom in and out with Alt+click
+        { src: '/web/plugin/zoom-js/zoom.js', async: true },
+        // Speaker notes
+        { src: '/web/plugin/notes/notes.js', async: true },
+        // External HTML files
+        { src: '/web/plugin/external/external.js', condition: function() { return !!document.querySelector( '[data-external]' ); } }
+
+        ]
+      });
+    </script>
+
+    <div class="reveal" style="margin-top: -50px; padding-top: 50px;">
+  <div style="position: absolute; bottom: 1em; width: 100%; font-size: 0.4em; text-align: center;">
+    Peter Flach | http://www.cs.bris.ac.uk/~flach/SimplyLogical.html
+  </div>
+<div class="slides">
+
+  </body>
+
+</html>

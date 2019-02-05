@@ -1,0 +1,3412 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- The above 3 meta tags *must* come first in the head; any other head content must come *after* these tags -->
+<meta name="description" content="This book discusses methods to implement intelligent reasoning by means of Prolog programs. The book is written from the shared viewpoints of Computational Logic, which aims at automating various kinds of reasoning, and Artificial Intelligence, which seeks to implement aspects of intelligent behaviour on a computer.">
+
+<!-- SWISH -->
+<link href="/web/css/lpn.css" rel="stylesheet">
+<link href="/web/css/jquery-ui.min.css" rel="stylesheet">
+<script src="/web/js/jquery.min.js"></script>
+<script src="/web/js/jquery-ui.min.js"></script>
+<script src="/web/js/lpn.js"></script>
+
+<!-- custom stylesheet -->
+<!--<link href="/web/css/custom.css" rel="stylesheet">-->
+
+    <!--Reveal.js-->
+    <link href="/web/css/reveal.css" rel="stylesheet">
+    <link href="/web/css/theme/simple.css" rel="stylesheet">
+
+    
+      <meta name=Title content="Simply Logical">
+    
+    
+      <meta name=author content="Peter Flach">
+    
+    
+    
+      <title>Simply Logical</title>
+    
+  </head>
+
+  <body>
+    <!--navibar-->
+
+    <div class="reveal" style="margin-top: -50px; padding-top: 50px;">
+      <div style="position: absolute; bottom: 1em; width: 100%; font-size: 0.4em; text-align: center;">
+        Peter Flach | http://www.cs.bris.ac.uk/~flach/SimplyLogical.html
+      </div>
+      <div class="slides">
+
+        
+        <section>
+        <h3>Interactive lab examples</h3>
+          <h4>Simply Logical</h4>
+        </section>
+        
+
+        
+  
+  <section>
+    
+    <section>
+      
+  
+    <h2>Chapter 3: Logic Programming and Prolog</h2>
+  
+
+
+
+    </section>
+    
+    <section>
+      
+  
+    <h3>Declarative and procedural meaning</h3>
+  
+
+
+<p>
+A distinct feature of logical reasoning is the separation between model theory and proof theory: a set of logical formulas determines the set of its models, but also the set of formulas that can be derived by applying inference rules. Another way to say the same thing is: logical formulas have both a <em>declarative</em> meaning and a <em>procedural</em> meaning. For instance, declaratively the order of the atoms in the body of a clause is irrelevant, but procedurally it may determine the order in which different answers to a query are found.</p>
+    </section>
+    
+    <section>
+      
+  
+    <h3>Algorithm = logic + control</h3>
+  
+
+
+<p>Because of this procedural meaning of logical formulas, logic can be used as a programming language. If we want to solve a problem in a particular domain, we write down the required knowledge and apply the inference rules built into the logic programming language. Declaratively, this knowledge specifies <strong>what</strong> the problem is, rather than <strong>how</strong> it should be solved. </p>
+
+    </section>
+    
+    <section>
+      
+  
+    <h3>Algorithm = logic + control (ctd.)</h3>
+  
+
+
+
+
+<p>The distinction between declarative and procedural aspects of problem solving is succinctly expressed by Kowalski&rsquo;s equation</p>
+<blockquote>
+<p>algorithm = logic + control</p>
+</blockquote>
+<p>Here, <em>logic</em> refers to declarative knowledge, and <em>control</em> refers to procedural knowledge. The equation expresses that both components are needed to solve a problem algorithmically.</p>
+    </section>
+    
+    <section>
+      
+  
+    <h3>Programming with logic</h3>
+  
+
+
+<p>In a purely declarative programming language, the programmer would have no means to express procedural knowledge, because logically equivalent programs would behave identically. However, Prolog is not a purely declarative language, and therefore the procedural meaning of Prolog programs cannot be ignored. For instance, the order of the literals in the body of a clause usually influences the efficiency of the program to a large degree. Similarly, the order of clauses in a program often determines whether a program will give an answer at all. </p>
+
+    </section>
+    
+    <section>
+      
+  
+    <h3>Programming with logic (ctd.)</h3>
+  
+
+
+
+
+<p>Therefore, in this chapter we will take a closer look at Prolog&rsquo;s inference engine and its built-in features (some of which are non-declarative). Also, we will discuss some common programming techniques.</p>
+    </section>
+    
+  </section>
+  
+  <section>
+    
+    <section>
+      
+  
+    <h3>3.1 SLD-resolution</h3>
+  
+
+
+
+    </section>
+    
+    <section>
+      
+  
+    <h3>Prolog proof procedure</h3>
+  
+
+
+<p>Prolog&rsquo;s proof procedure is based on resolution refutation in definite clause logic. Resolution refutation has been explained in the previous chapter. In order to turn it into an executable proof procedure, we have to specify how a literal to resolve upon is selected, and how the second input clause is found. Jointly, this is called a <em>resolution strategy</em>. </p>
+
+    </section>
+    
+    <section>
+      
+  
+    <h3>Prolog proof procedure (ctd.)</h3>
+  
+
+
+
+
+<p>Consider the following program:</p>
+
+<div class="extract swish" id="3.1.1">
+  <pre class="source swish temp AutoStyle03" data-variant-id="group-1" id="swish.3.1.1" query-text="">
+student_of(X,T):-follows(X,C),teaches(T,C).
+follows(paul,computer_science).
+follows(paul,expert_systems).
+follows(maria,ai_techniques).
+teaches(adrian,expert_systems).
+teaches(peter,ai_techniques).
+teaches(peter,computer_science).
+  </pre>
+</div>
+
+
+    </section>
+    
+    <section>
+      
+  
+    <h3>Prolog proof procedure (ctd.)</h3>
+  
+
+
+
+
+<p>The query</p>
+<pre><code class="Prolog">?-student_of(S,peter).
+
+</code></pre>
+
+<p>has two possible answers: { <code>S</code> &rarr; <code>paul</code> } and { <code>S</code> &rarr; <code>maria</code> }. In order to find these answers, we first resolve the query with the first clause, yielding</p>
+<pre><code class="Prolog">?-follows(S,C),teaches(peter,C).
+</code></pre>
+
+
+    </section>
+    
+    <section>
+      
+  
+    <h3>Prolog proof procedure (ctd.)</h3>
+  
+
+
+
+
+<p>Now we have to decide whether we will search for a clause which resolves on <code>follows(S,C)</code>, or for a clause which resolves on <code>teaches(peter,C)</code>. This decision is governed by a <em>selection rule</em>. Prolog&rsquo;s selection rule is left to right, thus Prolog will search for a clause with a positive literal unifying with <code>follows(S,C)</code>. There are three of these, so now we must decide which one to try first. </p>
+
+    </section>
+    
+    <section>
+      
+  
+    <h3>Prolog proof procedure (ctd.)</h3>
+  
+
+
+
+
+<p>Prolog searches the clauses in the program top-down, so Prolog finds the answer { <code>S</code> &rarr; <code>paul</code> } first. Note that the second choice leads to a dead end: the resolvent is</p>
+<pre><code class="Prolog">?-teaches(peter,expert_systems).
+</code></pre>
+
+<p>which doesn&rsquo;t resolve with any clause in the program.</p>
+    </section>
+    
+    <section>
+      
+  
+    <h3>SLD-resolution</h3>
+  
+
+
+<p>This process is called <em>SLD-resolution</em>: <strong>S</strong> for selection rule, <strong>L</strong> for <em>linear</em> resolution (which refers to the shape of the proof trees obtained), and <strong>D</strong> for <em>definite</em> clauses. Graphically, SLD-resolution can be depicted as in fig. 3.1. </p>
+
+
+<div id="3.1">
+              <img src="img/figure/image022.svg" height="60%"/>
+          <p>
+            <b>Figure 3.1.</b> <p>An SLD-tree.</p>
+          </p>
+</div>
+
+
+
+    </section>
+    
+    <section>
+      
+  
+    <h3>SLD-resolution (ctd.)</h3>
+  
+
+
+
+
+<p>This <em>SLD-tree</em> should not be confused with a proof tree: first, only the resolvents are shown (no input clauses or unifiers), and second, it contains every possible resolution step. Thus, every leaf of an SLD-tree which contains the empty clause □ corresponds to a refutation and hence to a proof tree; such a leaf is also called a <em>success branch</em>. An underlined leaf which does not contain □ represents a <em>failure branch</em>.</p>
+
+    </section>
+    
+    <section>
+      
+  
+    <h3>SLD-resolution (ctd.)</h3>
+  
+
+
+
+
+
+<div class="extract exercise" id="3.1">
+  <div class="AutoStyle06">
+    <p class="exercise AutoStyle07">
+      <i>Exercise 3.1.</i> <p>Draw the proof trees for the two success branches in fig. 3.1.</p>
+
+      
+    </p>
+  </div>
+</div>
+    </section>
+    
+    <section>
+      
+  
+    <h3>SLD-tree</h3>
+  
+
+
+<p>As remarked already, Prolog searches the clauses in the program top-down, which is the same as traversing the SLD-tree from left to right. This not only determines the order in which answers (i.e. success branches) are found: it also determines whether any answers are found at all, because an SLD-tree may contain infinite branches, if some predicates in the program are recursive. 
+
+    </section>
+    
+    <section>
+      
+  
+    <h3>SLD-tree (ctd.)</h3>
+  
+
+
+
+As an example, consider the following program:</p>
+
+<div class="extract swish" id="3.1.3_2">
+  <pre class="source swish temp AutoStyle03" data-variant-id="group-1" id="swish.3.1.3_2" query-text="">
+brother_of(X,Y):-brother_of(Y,X).
+brother_of(paul,peter).
+  </pre>
+</div>
+
+<p>An SLD-tree for the query</p>
+<pre><code class="Prolog">?-brother_of(peter,B).
+</code></pre>
+
+<p>is depicted in fig. 3.2. </p>
+
+    </section>
+    
+    <section>
+      
+  
+    <h3>SLD-tree (ctd.)</h3>
+  
+
+
+
+
+
+
+<div id="3.2">
+              <img src="img/figure/image024.svg" height="60%"/>
+          <p>
+            <b>Figure 3.2.</b> <p>An SLD-tree with infinite branches.</p>
+          </p>
+</div>
+
+
+
+    </section>
+    
+    <section>
+      
+  
+    <h3>SLD-tree (ctd.)</h3>
+  
+
+
+
+
+<p>If we descend this tree taking the left branch at every node, we will never reach a leaf. On the other hand, if we take the right branch at every node, we almost immediately reach a success branch. Taking right branches instead of left branches in an SLD-tree corresponds to searching the clauses from bottom to top. 
+
+    </section>
+    
+    <section>
+      
+  
+    <h3>SLD-tree (ctd.)</h3>
+  
+
+
+
+The same effect would be obtained by reversing the order of the clauses in the program, and the SLD-tree clearly shows that this is enough to prevent Prolog from looping on this query. This is a rule of thumb that applies to most cases: <em>put non-recursive clauses before recursive ones</em>.</p>
+    </section>
+    
+    <section>
+      
+  
+    <h3>SLD-trees can be infinite</h3>
+  
+
+
+<p>However, note that, even after this modification, the program still has some problems. For one thing, the query <code>?-brother_of(peter,B)</code> will be answered an infinite number of times, because there are infinitely many refutations of it. But, even worse, consider a query that does <strong>not</strong> have an answer, like</p>
+<pre><code class="Prolog">?-brother_of(peter,maria).
+</code></pre>
+
+<p>No matter the order in which the SLD-tree is descended, Prolog will never discover that the query has in fact no answer, <em>simply because the SLD-tree is infinite</em>. So, one should be careful with programs like the above, which define a predicate to be <em>symmetric</em>.</p>
+    </section>
+    
+    <section>
+      
+  
+    <h3>Transitivity</h3>
+  
+
+
+<p>Another property of predicates which can cause similar problems is <em>transitivity</em>.Consider the following program:</p>
+
+<div class="extract swish" id="3.1.4_2">
+  <pre class="source swish temp AutoStyle03" data-variant-id="group-1" id="swish.3.1.4_2" query-text="">
+brother_of(paul,peter).
+brother_of(peter,adrian).
+brother_of(X,Y):-brother_of(X,Z),brother_of(Z,Y).
+  </pre>
+</div>
+
+<p>The third clause ensures that <code>?-brother_of(paul,adrian)</code> is a logical consequence of the program. 
+
+    </section>
+    
+    <section>
+      
+  
+    <h3>Transitivity (ctd.)</h3>
+  
+
+
+
+The SLD-tree for the query</p>
+<pre><code class="Prolog">?-brother_of(paul,B).
+</code></pre>
+
+<p>is depicted in fig. 3.3. Not only is this SLD-tree infinite, but the resolvents get longer and longer on deeper levels in the tree.</p>
+
+    </section>
+    
+    <section>
+      
+  
+    <h3>Transitivity (ctd.)</h3>
+  
+
+
+
+
+
+
+<div id="3.3">
+              <img src="img/figure/image026.svg" height="60%"/>
+          <p>
+            <b>Figure 3.3.</b> <p>An SLD-tree with infinite branches and expanding resolvents.</p>
+          </p>
+</div>
+
+    </section>
+    
+    <section>
+      
+  
+    <h3>Incompleteness</h3>
+  
+
+
+<p>We have encountered two problems with SLD-resolution: (<em>i</em>) we might never reach a success branch in the SLD-tree, because we get &lsquo;trapped&rsquo; into an infinite subtree, and (<em>ii</em>) any infinite SLD-tree causes the inference engine to loop if no (more) answers are to be found. The first problem means that Prolog is <em>incomplete</em>: some logical consequences of a program may never be found. 
+
+    </section>
+    
+    <section>
+      
+  
+    <h3>Incompleteness (ctd.)</h3>
+  
+
+
+
+Note carefully that this incompleteness is <strong>not</strong> caused by the inference rule of resolution, which is refutation complete. Indeed, for any program and any query, all the possible answers will be represented by success branches in the SLD-tree. The incompleteness of SLD-resolution is caused by the way the SLD-tree is searched.</p>
+    </section>
+    
+    <section>
+      
+  
+    <h3>Depth-first vs. breadth-first</h3>
+  
+
+
+<p>There exists a solution to this problem: if we descend the tree layer by layer rather than branch-by-branch, we will find any leaf before we descend to the next level. However, this also means that we must keep track of <strong>all</strong> the resolvents on a level, instead of just a single one. Therefore, this <em>breadth-first</em> search strategy needs much more memory than the <em>depth-first</em> strategy used by Prolog. 
+
+    </section>
+    
+    <section>
+      
+  
+    <h3>Depth-first vs. breadth-first (ctd.)</h3>
+  
+
+
+
+In fact, Prolog&rsquo;s incompleteness was a deliberate design choice, sacrifying completeness in order to obtain an efficient use of memory<span class="CustomFootnote">
+  <a href="#_ftn7" name="_ftnref7" title="">
+      <span class="MsoFootnoteReference">
+        <span class="AutoStyle13">
+          <span class="AutoStyle14">
+            [7]
+          </span>
+        </span>
+     </span>
+   </a>
+</span>. As we saw above, this problem can often be avoided by ordering the clauses in the program in a specific way (which means that we have to take the procedural meaning of the program into account).</p>
+    </section>
+    
+    <section>
+      
+  
+    <h3>Semi-decidability</h3>
+  
+
+
+<p>As for the second problem, we already saw that this is due to the semi-decidability of full clausal logic, which means that there is no general solution to it.</p>
+
+<div class="extract exercise" id="3.2">
+  <div class="AutoStyle06">
+    <p class="exercise AutoStyle07">
+      <i>Exercise 3.2.</i> <p>Draw the SLD-tree for the following program:</p>
+
+      <p><div class="extract swish" id="2.3.2_3">
+  <pre class="source swish temp AutoStyle03" data-variant-id="group-1" id="swish.2.3.2_3" query-text="">
+list([]).
+list([_H|T]):-list(T).
+  </pre>
+</div></p>
+<p>and the query</p>
+<p><code>?-list(L).</code></p>
+    </p>
+  </div>
+</div>
+    </section>
+    
+  </section>
+  
+  <section>
+    
+    <section>
+      
+  
+    <h3>3.2 Pruning the search by means of cut</h3>
+  
+
+
+
+    </section>
+    
+    <section>
+      
+  
+    <h3>Backtracking</h3>
+  
+
+
+<p>As shown in the previous section, Prolog constantly searches the clauses in a program in order to reach a success branch in the SLD-tree for a query. If a failure branch is reached (i.e., a non-empty resolvent which cannot be reduced any further), Prolog has to &lsquo;unchoose&rsquo; the last-chosen program clause, and try another one. This amounts to going up one level in the SLD-tree, and trying the next branch to the right. This process of reconsidering previous choices is called <em>backtracking</em>. 
+
+    </section>
+    
+    <section>
+      
+  
+    <h3>Backtracking (ctd.)</h3>
+  
+
+
+
+Note that backtracking requires that all previous resolvents are remembered for which not all alternatives have been tried yet, together with a pointer to the most recent program clause that has been tried at that point. Because of Prolog&rsquo;s depth-first search strategy, we can easily record all previous resolvents in a <em>goal stack</em>: backtracking is then implemented by popping the upper resolvent from the stack, and searching for the next program clause to resolve with.</p>
+    </section>
+    
+    <section>
+      
+  
+    <h3>The goal stack</h3>
+  
+
+
+<p>As an illustration, consider again the SLD-tree in fig. 3.1. The resolvent in the middle branch</p>
+<pre><code class="Prolog">:-teaches(peter,expert_systems)
+</code></pre>
+
+<p>cannot be reduced any further, and thus represents a failure branch. At that point, the stack contains (top-down) the previous resolvents</p>
+<pre><code class="Prolog">:-follows(S,C),teaches(peter,C)
+?-student_of(S,peter)
+</code></pre>
+
+
+    </section>
+    
+    <section>
+      
+  
+    <h3>The goal stack (ctd.)</h3>
+  
+
+
+
+
+<p>The top one is popped from the stack; it has been most recently resolved with <code>follows(paul,expert_systems)</code>, so we continue searching the program from that clause, finding <code>follows(maria,ai_techniques)</code> as the next alternative.</p>
+    </section>
+    
+    <section>
+      
+  
+    <h3>Choice points</h3>
+  
+
+
+<p>A node in the SLD-tree which is not a leaf is called a <em>choice point</em>, because the subtree rooted at that node may contain several success branches, each of which may be reached by a different choice for a program clause to resolve with. 
+
+    </section>
+    
+    <section>
+      
+  
+    <h3>Choice points (ctd.)</h3>
+  
+
+
+
+Now, suppose a subtree contains only one success branch, yielding an answer to our query. If we want to know whether there are any alternative answers, we can force Prolog to backtrack. However, since the rest of the subtree does not contain any success branches, we might as well skip it altogether, thus speeding up backtracking. 
+
+    </section>
+    
+    <section>
+      
+  
+    <h3>Choice points (ctd.)</h3>
+  
+
+
+
+But how do we tell Prolog that a subtree contains only one success branch? For this, Prolog provides a control device which is called <em>cut</em> (written <code>!</code>), because it cuts away (or prunes) part of the SLD-tree.</p>
+    </section>
+    
+    <section>
+      
+  
+    <h3>Pruning an unncessessary choice point</h3>
+  
+
+
+<p>To illustrate the effect of cut, consider the following program.</p>
+
+<div class="extract swish" id="3.2.2">
+  <pre class="source swish temp AutoStyle03" data-variant-id="group-1" id="swish.3.2.2" query-text="">
+parent(X,Y):-father(X,Y).
+parent(X,Y):-mother(X,Y).
+father(john,paul).
+mother(mary,paul).
+  </pre>
+</div>
+
+<p>The SLD-tree for the query</p>
+<pre><code class="Prolog">?-parent(john,C).
+</code></pre>
+
+<p>is given in fig. 3.4. </p>
+
+    </section>
+    
+    <section>
+      
+  
+    <h3>Pruning an unncessessary choice point (ctd.)</h3>
+  
+
+
+
+
+
+
+<div id="3.4">
+              <img src="img/figure/image028.svg" height="60%"/>
+          <p>
+            <b>Figure 3.4.</b> <p>SLD-tree for the query<br><code>?-parent(john,C)</code>.</p>
+          </p>
+</div>
+
+
+
+    </section>
+    
+    <section>
+      
+  
+    <h3>Pruning an unncessessary choice point (ctd.)</h3>
+  
+
+
+
+
+<p>The answer given by Prolog is { <code>C</code> &rarr; <code>paul</code> }. By asking whether there are any other answers, we force Prolog to backtrack to the most recent choice point for which there are any alternatives left, which is the root of the SLD-tree (i.e. the original query). Prolog tries the second clause for <code>parent</code>, but discovers that this leads to a failure branch.</p>
+    </section>
+    
+    <section>
+      
+  
+    <h3>How to interpret a cut</h3>
+  
+
+
+<p>Of course, <strong>we</strong> know that this backtracking step did not make sense: if John is a father of anyone, he can&rsquo;t be a mother. We can express this by adding a cut to the first <code>parent</code> clause:</p>
+
+<div class="extract swish" id="3.2.3">
+  <pre class="source swish temp AutoStyle03" data-variant-id="group-1" id="swish.3.2.3" query-text="">
+parent(X,Y):-father(X,Y),!.
+parent(X,Y):-mother(X,Y).
+father(john,paul).
+mother(mary,paul).
+  </pre>
+</div>
+
+
+    </section>
+    
+    <section>
+      
+  
+    <h3>How to interpret a cut (ctd.)</h3>
+  
+
+
+
+
+<p>The cut says: <em>once you&rsquo;ve reached me, stick to all the variable substitutions you&rsquo;ve found after you entered my clause</em>. That is: don&rsquo;t try to find any alternative solutions to the literals left of the cut, and also: don&rsquo;t try any alternative clauses for the one in which the cut is found. </p>
+
+    </section>
+    
+    <section>
+      
+  
+    <h3>How to interpret a cut (ctd.)</h3>
+  
+
+
+
+
+<p>Given this modified program, the SLD-tree for the same query is shown in fig. 3.5. </p>
+
+
+<div id="3.5">
+              <img src="img/figure/image030.svg" height="60%"/>
+          <p>
+            <b>Figure 3.5.</b> <p>The effect of cut.</p>
+          </p>
+</div>
+
+
+
+    </section>
+    
+    <section>
+      
+  
+    <h3>How to interpret a cut (ctd.)</h3>
+  
+
+
+
+
+<p>Since <code>!</code> is true by definition, the resolvent <code>:-!</code> reduces to the empty clause. The shaded part represents the part of the SLD-tree which is pruned as a result of the cut. That is: every alternative at choice points below and including <code>?-parent(john,C)</code>, which are on the stack when the cut is reached, are pruned. 
+</p>
+    </section>
+    
+    <section>
+      
+  
+    <h3>Green and red cuts</h3>
+  
+
+
+<p>A cut is harmless if it does not cut away subtrees containing success branches. If a cut prunes success branches, then some logical consequences of the program are not returned as answers, resulting in a procedural meaning different from the declarative meaning. Cuts of the first kind are called <em>green</em> cuts, while cuts of the second kind are called <em>red</em> cuts. A green cut merely stresses that the conjunction of literals to its left is <em>deterministic</em>: it does not give alternative solutions. In addition, it signifies that if those literals give a solution, the clauses below it will not result in any alternatives.</p>
+    </section>
+    
+    <section>
+      
+  
+    <h3>Behaviour of cut depends on the query</h3>
+  
+
+
+<p>This seems to be true for the above program: John is the father of only one child, and no-one is both a father and a mother. However, note that we only analysed the situation with regard to a particular query. We can show that the cut is in fact red by asking the query</p>
+<pre><code class="Prolog">?-parent(P,paul).
+</code></pre>
+
+<p>The answer { <code>P</code> &rarr; <code>mary</code> } is pruned by the cut (fig. 3.7). That is, the literal <code>father(X,Y)</code> left to the cut is only deterministic if <code>X</code> is <code>instantiated</code> (is substituted by a non-variable value).</p>
+
+    </section>
+    
+    <section>
+      
+  
+    <h3>Behaviour of cut depends on the query (ctd.)</h3>
+  
+
+
+
+
+
+
+<div id="3.7">
+              <img src="img/figure/image034.svg" height="60%"/>
+          <p>
+            <b>Figure 3.7.</b> <p>A success branch is pruned.</p>
+          </p>
+</div>
+
+    </section>
+    
+    <section>
+      
+  
+    <h3>Not a good use of cut</h3>
+  
+
+
+<p>Note that success branches are also pruned for the first query if John has several children:</p>
+
+<div class="extract swish" id="3.2.4">
+  <pre class="source swish temp AutoStyle03" data-variant-id="group-1" id="swish.3.2.4" query-text="">
+parent(X,Y):-father(X,Y),!.
+parent(X,Y):-mother(X,Y).
+father(john,paul).
+father(john,peter).
+mother(mary,paul).
+mother(mary,peter).
+  </pre>
+</div>
+
+<p>The SLD-tree for the query</p>
+<pre><code class="Prolog">?-parent(john,C).
+</code></pre>
+
+<p>is given in fig. 3.8. </p>
+
+    </section>
+    
+    <section>
+      
+  
+    <h3>Not a good use of cut (ctd.)</h3>
+  
+
+
+
+
+
+
+<div id="3.8">
+              <img src="img/figure/image036.svg" height="60%"/>
+          <p>
+            <b>Figure 3.8.</b> <p>Another success branch is pruned.</p>
+          </p>
+</div>
+
+
+
+    </section>
+    
+    <section>
+      
+  
+    <h3>Not a good use of cut (ctd.)</h3>
+  
+
+
+
+
+<p>Indeed, the second answer { <code>C</code> &rarr; <code>peter</code> } is pruned by the cut. This clearly shows that the effect of a cut is not only determined by the clause in which it occurs but also by other clauses. Therefore, the effect of a cut is often hard to understand.</p>
+    </section>
+    
+    <section>
+      
+  
+    <h3>Cut is a low-level construct</h3>
+  
+
+
+<p>Programs with cuts are not only difficult to understand; this last example also shows that their procedural interpretation (the set of answers they produce to a query) may be different from their declarative interpretation (the set of its logical consequences). 
+
+    </section>
+    
+    <section>
+      
+  
+    <h3>Cut is a low-level construct (ctd.)</h3>
+  
+
+
+
+Logically, cut has no meaning: it always evaluates to <strong>true</strong>, and therefore it can always be added or removed from the body of a clause without affecting its declarative interpretation. Procedurally, cut may have many effects, as the preceding examples show. 
+
+    </section>
+    
+    <section>
+      
+  
+    <h3>Cut is a low-level construct (ctd.)</h3>
+  
+
+
+
+This incompatibility between declarative and procedural interpretation makes it a very problematic concept. Much research in Logic Programming aims at replacing it by higher-level constructs which have cleaner declarative meanings and which are easier to understand. The most important of these will be considered in the next two sections.</p>
+
+    </section>
+    
+    <section>
+      
+  
+    <h3>Cut is a low-level construct (ctd.)</h3>
+  
+
+
+
+
+
+<div class="extract exercise" id="3.3">
+  <div class="AutoStyle06">
+    <p class="exercise AutoStyle07">
+      <i>Exercise 3.3.</i> <p>Draw the SLD-tree for the query</p>
+
+      <p><code>?-likes(A,B)</code></p>
+<p>given the following program:</p>
+<p><div class="extract swish" id="3.2.ex3.3_2">
+  <pre class="source swish temp AutoStyle03" data-variant-id="group-1" id="swish.3.2.ex3.3_2" query-text="">
+likes(peter,Y):-friendly(Y).
+likes(T,S):-student_of(S,T).
+student_of(maria,peter).
+student_of(paul,peter).
+friendly(maria).
+  </pre>
+</div></p>
+<p>Add a cut in order to prune away one of the answers { <code>A</code> &rarr; <code>peter</code>, <code>B</code> &rarr; <code>maria</code> }, and indicate the result in the SLD-tree. Can this be done without pruning away the third answer?</p>
+    </p>
+  </div>
+</div>
+    </section>
+    
+  </section>
+  
+  <section>
+    
+    <section>
+      
+  
+    <h3>3.3 Negation as failure</h3>
+  
+
+
+
+    </section>
+    
+    <section>
+      
+  
+    <h3>Overlapping clauses</h3>
+  
+
+
+<p>The following program computes the maximum of two integers:</p>
+
+<div class="extract swish" id="3.3.1">
+  <pre class="source swish temp AutoStyle03" data-variant-id="group-1" id="swish.3.3.1" query-text="">
+max(M,N,M):- M >= N.
+max(M,N,N):- M =< N.
+  </pre>
+</div>
+
+<p><code>&gt;=</code> and <code>=&lt;</code> are built-in predicates with meaning &lsquo;greater than or equal&rsquo; and &lsquo;less than or equal&rsquo;, respectively<span class="CustomFootnote">
+  <a href="#_ftn8" name="_ftnref8" title="">
+      <span class="MsoFootnoteReference">
+        <span class="AutoStyle13">
+          <span class="AutoStyle14">
+            [8]
+          </span>
+        </span>
+     </span>
+   </a>
+</span>. Declaratively, the program captures the intended meaning, but procedurally there are two different ways to solve queries of the form <code>?-max(N,N,M)</code>. 
+
+    </section>
+    
+    <section>
+      
+  
+    <h3>Overlapping clauses (ctd.)</h3>
+  
+
+
+
+The reason for this is that the bodies of the two clauses are not exclusive: they both succeed if the first two values of the <code>max</code> predicate are equal. We could of course remove one of the equality symbols, but suppose that we use a cut instead:</p>
+
+<div class="extract swish" id="3.3.2">
+  <pre class="source swish temp AutoStyle03" data-variant-id="group-1" id="swish.3.3.2" query-text="">
+max(M,N,M):- M >= N,!.
+max(_M,N,N).
+  </pre>
+</div>
+
+<p>With a red cut, this program can only be understood procedurally. The question is: does the procedural meaning correspond to the intended meaning? 
+    </section>
+    
+    <section>
+      
+  
+    <h3>Overlapping clauses (ctd.)</h3>
+  
+
+
+
+Perhaps surprisingly, the answer is no! For instance, the query</p>
+<pre><code class="Prolog">?-max(5,3,3).
+</code></pre>
+
+<p>succeeds: the cut is never reached, because the literal in the query does not unify with the head of the first clause. The second program is in fact a very bad program: the declarative and procedural meanings differ, and <strong>neither</strong> of them captures the intended meaning.</p>
+
+    </section>
+    
+    <section>
+      
+  
+    <h3>Overlapping clauses (ctd.)</h3>
+  
+
+
+
+
+
+<div class="extract exercise" id="3.4">
+  <div class="AutoStyle06">
+    <p class="exercise AutoStyle07">
+      <i>Exercise 3.4.</i> <p>Show that this cut is red, by drawing an SLD-tree in which a success branch is pruned.</p>
+
+      
+    </p>
+  </div>
+</div>
+    </section>
+    
+    <section>
+      
+  
+    <h3>Making clauses mutually exclusive</h3>
+  
+
+
+<p>The procedural meaning of the program would be correct if its use is restricted to queries with uninstantiated third argument. It illustrates a very common use of cut: to ensure that the bodies of the clauses are mutually exclusive. In general, if we have a program of the form</p>
+<pre><code class="Prolog">p:-q,!,r.
+p:-s.
+</code></pre>
+
+<p>its meaning is something like</p>
+<pre><code class="Prolog">p:-q,r.
+p:-not_q,s.
+</code></pre>
+
+
+    </section>
+    
+    <section>
+      
+  
+    <h3>Making clauses mutually exclusive (ctd.)</h3>
+  
+
+
+
+
+<p>How should <code>not_q</code> be defined, in order to make the second program work? If <code>q</code> succeeds, <code>not_q</code> should fail. This is expressed by the following clause:</p>
+<pre><code class="Prolog">not_q:-q,fail
+</code></pre>
+
+<p>where <code>fail</code> is a built-in predicate, which is always <strong>false</strong>. If <code>q</code> fails, <code>not_q</code> should succeed. This can be realised by the program</p>
+<pre><code class="Prolog">not_q:-q,!,fail.
+not_q.
+</code></pre>
+
+<p>The cut in the first clause is needed to prevent backtracking to the second clause when <code>q</code> succeeds.</p>
+    </section>
+    
+    <section>
+      
+  
+    <h3>The not/1 meta-predicate</h3>
+  
+
+
+<p>This approach is not very practical, because it only works for a single proposition symbol, without variables. We would like to treat the literal to be negated as a parameter, as in</p>
+<pre><code class="Prolog">not(Goal):- /* execute Goal, */ !,fail.
+not(Goal).
+</code></pre>
+
+<p>
+To execute a goal passed on as a variable we can use the built-in predicate <code>call/1</code>, which takes a goal as argument and succeeds if and only if execution of that goal succeeds: </p>
+<pre><code class="Prolog">not(Goal):- call(Goal) !,fail.
+not(Goal).
+</code></pre>
+
+<p>
+
+    </section>
+    
+    <section>
+      
+  
+    <h3>The not/1 meta-predicate (ctd.)</h3>
+  
+
+
+
+Predicates like <code>not</code> and <code>call</code> are called <em>meta-predicates</em>, that take formulas from the same logical language in which they are written as arguments. As we will see in later chapters, meta-predicates play an important role in this book.</p>
+    </section>
+    
+    <section>
+      
+  
+    <h3>Negation as failure to prove</h3>
+  
+
+
+<p>We illustrate the operation of <code>not</code> by means of the following propositional program:</p>
+<pre><code class="Prolog">p:-q,r.
+p:-not(q),s.
+s.
+</code></pre>
+
+<p>and the query <code>?-p</code>. The SLD-tree is shown in fig. 3.9. The first clause for <code>p</code> leads to a failure branch, because <code>q</code> cannot be proved. The second clause for <code>p</code> is tried, and <code>not(q)</code> is evaluated by trying to prove <code>q</code>. Again, this fails, which means that the second clause for <code>not</code> is tried, which succeeds. Thus, <code>not(q)</code> <em>is proved by failing to prove</em> <code>q</code>! Therefore, this kind of negation is called <em>negation as failure</em>.</p>
+
+    </section>
+    
+    <section>
+      
+  
+    <h3>Negation as failure to prove (ctd.)</h3>
+  
+
+
+
+
+
+
+<div id="3.9">
+              <img src="img/figure/image038.svg" height="60%"/>
+          <p>
+            <b>Figure 3.9.</b> <p>SLD-tree with <code>not</code>.</p>
+          </p>
+</div>
+
+    </section>
+    
+    <section>
+      
+  
+    <h3>A small price to pay</h3>
+  
+
+
+<p>Fig. 3.9 shows, that Prolog tries to prove <code>q</code> twice. Consequently, the program with <code>not</code> is slightly less efficient than the version with cut:</p>
+<pre><code class="Prolog">p:-q,!,r.
+p:-s.
+s.
+</code></pre>
+
+<p>which leads to the SLD-tree shown in fig. 3.10. Here, <code>q</code> is tried only once. However, in general we prefer the use of <code>not</code>, because it leads to programs of which the declarative meaning corresponds more closely to the procedural meaning.</p>
+
+    </section>
+    
+    <section>
+      
+  
+    <h3>A small price to pay (ctd.)</h3>
+  
+
+
+
+
+
+
+<div id="3.10">
+              <img src="img/figure/image040.svg" height="60%"/>
+          <p>
+            <b>Figure 3.10.</b> <p>Equivalent SLD-tree with cut.</p>
+          </p>
+</div>
+
+    </section>
+    
+    <section>
+      
+  
+    <h3>Another example of not/1</h3>
+  
+
+
+<p>In the following program, <code>:-not(q)</code> fails because <code>:-q</code> succeeds:</p>
+<pre><code class="Prolog">p:-not(q),r.
+p:-q.
+q.
+r.
+</code></pre>
+
+<p>The SLD-tree for the query <code>?-p</code> is shown in fig. 3.11. Since <code>q</code> succeeds, <code>fail</code> ensures that <code>not(q)</code> fails. The cut is needed to ensure that everything following the <code>not</code> is pruned, even if it contains a success branch.</p>
+
+    </section>
+    
+    <section>
+      
+  
+    <h3>Another example of not/1 (ctd.)</h3>
+  
+
+
+
+
+
+
+<div id="3.11">
+              <img src="img/figure/image042.svg" height="60%"/>
+          <p>
+            <b>Figure 3.11.</b> <p><code>:-not(q)</code> fails because <code>:-q</code> succeeds.</p>
+          </p>
+</div>
+
+    </section>
+    
+    <section>
+      
+  
+    <h3>Variable issues</h3>
+  
+
+
+<p>The implementation of <code>not</code> illustrated above can lead to problems if variables are involved. Take a look at the following program:</p>
+
+<div class="extract swish" id="3.3.3">
+  <pre class="source swish temp AutoStyle03" data-variant-id="group-1" id="swish.3.3.3" query-text="?-bachelor(fred). ?-bachelor(peter).">
+bachelor(X):-not(married(X)),man(X).
+man(fred).
+man(peter).
+married(fred).
+  </pre>
+</div>
+
+
+    </section>
+    
+    <section>
+      
+  
+    <h3>Variable issues (ctd.)</h3>
+  
+
+
+
+
+
+<div class="extract exercise" id="3.5">
+  <div class="AutoStyle06">
+    <p class="exercise AutoStyle07">
+      <i>Exercise 3.5.</i> <p>Draw the SLD-trees for the queries <code>?-bachelor(fred)</code> and <code>?-bachelor(peter)</code>.</p>
+
+      
+    </p>
+  </div>
+</div>
+    </section>
+    
+    <section>
+      
+  
+    <h3>not/1 is not a generator</h3>
+  
+
+
+<p>Consider the query</p>
+<pre><code class="Prolog">?-bachelor(X).
+</code></pre>
+
+<p>for which the SLD-tree is depicted in fig. 3.12. </p>
+
+
+<div id="3.12">
+              <img src="img/figure/image044.svg" height="60%"/>
+          <p>
+            <b>Figure 3.12.</b> <p>There are no bachelors?!</p>
+          </p>
+</div>
+
+
+
+    </section>
+    
+    <section>
+      
+  
+    <h3>not/1 is not a generator (ctd.)</h3>
+  
+
+
+
+
+<p>According to negation as failure, Prolog tries to prove <code>not(married(X))</code> by trying <code>married(X)</code> first. Since this succeeds for <code>X</code> = <code>fred</code>, the cut is reached and the success branch to the right (representing the correct answer { <code>X</code> &rarr; <code>peter</code> }) is pruned. Thus, <code>:‑not(married(X))</code> fails because <code>:‑married(X)</code> succeeds for one value of <code>X</code>. That is, <code>not(married(X))</code> is interpreted as &lsquo;it is false that somebody is married&rsquo;, or equivalently, &lsquo;nobody is married&rsquo;. 
+
+    </section>
+    
+    <section>
+      
+  
+    <h3>not/1 is not a generator (ctd.)</h3>
+  
+
+
+
+But this means that the clause</p>
+<pre><code class="Prolog">bachelor(X):-not(married(X)),man(X)
+</code></pre>
+
+<p>is interpreted as &lsquo; <code>X</code> is a bachelor if nobody is married and <code>X</code> is a man&rsquo;, which is of course not as intended.</p>
+<p></p>
+    </section>
+    
+    <section>
+      
+  
+    <h3>Avoid unbound variables in not/1</h3>
+  
+
+
+<p>Thus, if <code>G</code> is instantiated to a goal containing variables at the time <code>not(G)</code> is called, the result may be not in accordance with negation as failure. <em>It is the programmer&rsquo;s responsibility to avoid this.</em> A simple remedy that will often work is to ensure the grounding of <code>G</code> by literals preceding <code>not(G)</code> in the body of the clause, i.e.</p>
+
+<div class="extract swish" id="3.3.3a">
+  <pre class="source swish temp AutoStyle03" data-variant-id="group-1" id="swish.3.3.3a" query-text="?-bachelor(X).">
+bachelor(X):-man(X),not(married(X)).
+man(fred).
+man(peter).
+married(fred).
+  </pre>
+</div>
+
+
+    </section>
+    
+    <section>
+      
+  
+    <h3>Avoid unbound variables in not/1 (ctd.)</h3>
+  
+
+
+
+
+
+<div class="extract exercise" id="3.6">
+  <div class="AutoStyle06">
+    <p class="exercise AutoStyle07">
+      <i>Exercise 3.6.</i> <p>Show that the modified program produces the right answer, by drawing the SLD-tree for the query <code>?-bachelor(X)</code>.</p>
+
+      
+    </p>
+  </div>
+</div>
+    </section>
+    
+    <section>
+      
+  
+    <h3>Negation as failure: summary</h3>
+  
+
+
+<p>Let&rsquo;s summarise the points made about negation in Prolog. It is often used to ensure that only one of several possible clauses is applicable. The same effect can be achieved by means of cut, but in general we prefer the use of <code>not</code>, although it is somewhat less efficient<span class="CustomFootnote">
+  <a href="#_ftn10" name="_ftnref10" title="">
+      <span class="MsoFootnoteReference">
+        <span class="AutoStyle13">
+          <span class="AutoStyle14">
+            [10]
+          </span>
+        </span>
+     </span>
+   </a>
+</span>. <code>not</code> is supplied by Prolog as a meta-predicate (i.e. a predicate which takes formulas from the same logical language in which it is written as arguments). It is only a partially correct implementation of negation as failure, since it does not operate correctly when its argument is a goal containing variables.</p>
+    </section>
+    
+  </section>
+  
+  <section>
+    
+    <section>
+      
+  
+    <h3>3.4 Other uses of cut</h3>
+  
+
+
+
+    </section>
+    
+    <section>
+      
+  
+    <h3>Beyond negation</h3>
+  
+
+
+<p>Consider the following propositional program:</p>
+<pre><code class="Prolog">p:-q,r,s,!,t.
+p:-q,r,u.
+q.
+r.
+u.
+</code></pre>
+
+
+<div class="extract exercise" id="3.7">
+  <div class="AutoStyle06">
+    <p class="exercise AutoStyle07">
+      <i>Exercise 3.7.</i> <p>Show that the query <code>?-p</code> succeeds, but that <code>q</code> and <code>r</code> are tried twice.</p>
+
+      
+    </p>
+  </div>
+</div>
+
+
+    </section>
+    
+    <section>
+      
+  
+    <h3>Beyond negation (ctd.)</h3>
+  
+
+
+
+
+<p>This inefficiency can be avoided by putting <code>s,!</code> at the beginning of the body of the first clause. However, in full clausal logic the goals preceding <code>s</code> might supply necessary variable bindings, which requires them to be called first. A possible solution would be the introduction of an extra proposition symbol:</p>
+<pre><code class="Prolog">p:-q,r,if_s_then_t_else_u.
+if_s_then_t_else_u:-s,!,t.
+if_s_then_t_else_u:-u.
+</code></pre>
+
+
+    </section>
+    
+    <section>
+      
+  
+    <h3>Beyond negation (ctd.)</h3>
+  
+
+
+
+
+
+<div class="extract exercise" id="3.8">
+  <div class="AutoStyle06">
+    <p class="exercise AutoStyle07">
+      <i>Exercise 3.8.</i> <p>Show that <code>q</code> and <code>r</code> are now tried only once.</p>
+
+      
+    </p>
+  </div>
+</div>
+    </section>
+    
+    <section>
+      
+  
+    <h3>If-then-else</h3>
+  
+
+
+<p>Just as we did with <code>not</code>, we can rewrite this new proposition symbol to a generally applicable meta-predicate:</p>
+<pre><code class="Prolog">if_then_else(S,T,U):-S,!,T.
+if_then_else(S,T,U):-U.
+</code></pre>
+
+
+    </section>
+    
+    <section>
+      
+  
+    <h3>If-then-else (ctd.)</h3>
+  
+
+
+
+
+<p>Note that we can nest applications of <code>if_then_else</code>, for instance</p>
+<pre><code class="Prolog">if_then_else_else(P,Q,R,S,T):-
+    if_then_else(P,Q,if_then_else(R,S,T)).
+</code></pre>
+
+<p>Unfolding the definition of <code>if_then_else</code> yields</p>
+<pre><code class="Prolog">if_then_else_else(P,Q,R,S,T):-P,!,Q.
+if_then_else_else(P,Q,R,S,T):-R,!,S.
+if_then_else_else(P,Q,R,S,T):-T.
+</code></pre>
+
+<p>which clearly shows the meaning of the predicate: &lsquo;if <em>P</em> then <em>Q</em> else if <em>R</em> then <em>S</em> else <em>T</em> &rsquo;. 
+
+    </section>
+    
+    <section>
+      
+  
+    <h3>If-then-else (ctd.)</h3>
+  
+
+
+
+This resembles the CASE-statement of procedural languages, only the above notation is much more clumsy. Most Prolog interpreters provide the notation <code>P-&gt;Q;R</code> for if-then-else; the nested variant then becomes <code>P-&gt;Q;(R-&gt;S;T)</code>. The parentheses are not strictly necessary, but in general the outermost if-then-else literal should be enclosed in parentheses. 
+
+    </section>
+    
+    <section>
+      
+  
+    <h3>If-then-else (ctd.)</h3>
+  
+
+
+
+A useful lay-out is shown by the following program:</p>
+<pre><code class="Prolog">diagnosis(Patient,Condition):-
+    temperature(Patient,T),
+    ( T=&lt;37        -&gt; blood_pressure(Patient,Condition)
+    ; T&gt;37,T&lt;38 -&gt; Condition=ok
+    ; otherwise       -&gt; diagnose_fever(Patient,Condition)
+    ).
+</code></pre>
+
+<p><code>otherwise</code> is always assigned the truthvalue <strong>true</strong>, so the last rule applies if all the others fail.</p>
+    </section>
+    
+    <section>
+      
+  
+    <h3>When search needs pruning</h3>
+  
+
+
+<p><code>not</code> and if-then-else show that many uses of cut can be replaced by higher-level constructs, which are easier to understand. However, this is not true for every use of cut. For instance, consider the following program:</p>
+<pre><code class="Prolog">play(Board,Player):-
+    lost(Board,Player).
+play(Board,Player):-
+    find_move(Board,Player,Move),
+    make_move(Board,Move,NewBoard),
+    next_player(Player,Next),
+    play(NewBoard,Next).
+</code></pre>
+
+
+    </section>
+    
+    <section>
+      
+  
+    <h3>When search needs pruning (ctd.)</h3>
+  
+
+
+
+
+<p>This program plays a game by recursively looking for best moves. Suppose one game has been finished; that is, the query <code>?-play(Start,First)</code> (with appropriate instantiations of the variables) has succeeded. As usual, we can ask Prolog whether there are any alternative solutions. Prolog will start backtracking, looking for alternatives for the most recent move, then for the move before that one, and so on. That is, <em>Prolog has maintained all previous board situations, and every move made can be undone</em>. 
+
+    </section>
+    
+    <section>
+      
+  
+    <h3>When search needs pruning (ctd.)</h3>
+  
+
+
+
+Although this seems a desirable feature, in reality it is totally unpractical because of the memory requirements: after a few moves you would get a stack overflow. In such cases, we tell Prolog not to reconsider any previous moves, by placing a cut just before the recursive call. This way, we pop the remaining choice points from the stack before entering the next recursion. In fact, this technique results in a use of memory similar to that of iterative loops in procedural languages.</p>
+    </section>
+    
+    <section>
+      
+  
+    <h3>Tail recursion</h3>
+  
+
+
+<p>Note that this only works if the recursive call is the last call in the body. In general, it is advisable to write your recursive predicates like <code>play</code> above: the non-recursive clause before the recursive one, and the recursive call at the end of the body. A recursive predicate written this way is said to be <em>tail recursive</em>. 
+
+    </section>
+    
+    <section>
+      
+  
+    <h3>Tail recursion (ctd.)</h3>
+  
+
+
+
+If in addition the literals before the recursive call are deterministic (yield only one solution), some Prolog interpreters may recognise this and change recursion into iteration. This process is called <em>tail recursion optimisation</em>. As illustrated above, you can force this optimisation by placing a cut before the recursive call.</p>
+    </section>
+    
+  </section>
+  
+  <section>
+    
+    <section>
+      
+  
+    <h3>3.5 Arithmetic expressions</h3>
+  
+
+
+
+    </section>
+    
+    <section>
+      
+  
+    <h3>Representing natural numbers</h3>
+  
+
+
+<p>In Logic Programming, recursion is the only looping control structure. Consequently, recursive datatypes such as lists can be expressed very naturally. Natural numbers also have a recursive nature: &lsquo;0 is a natural number, and if <em>X</em> is a natural number, then the successor of <em>X</em> is also a natural number&rsquo;. In Prolog, this is expressed as</p>
+
+<div class="extract swish" id="3.5.0">
+  <pre class="source swish temp AutoStyle03" data-variant-id="group-1" id="swish.3.5.0" query-text="?-nat(s(s(0))).">
+nat(0).
+nat(s(X)):-nat(X).
+  </pre>
+</div>
+
+
+    </section>
+    
+    <section>
+      
+  
+    <h3>Representing natural numbers (ctd.)</h3>
+  
+
+
+
+
+<p>Addition of natural numbers is defined in terms of successors:</p>
+
+<div class="extract swish" id="3.5.1">
+  <pre class="source swish temp AutoStyle03" data-variant-id="group-1" id="swish.3.5.1" query-text="?-add(s(s(0)),Y,s(s(s(0)))).">
+add(0,X,X).
+add(s(X),Y,s(Z)):-add(X,Y,Z).
+  </pre>
+</div>
+
+<p>The following query asks for the sum of two and three:</p>
+<pre><code class="Prolog">?-add(s(s(0)),s(s(s(0))),Z).
+</code></pre>
+
+<pre><code class="Prolog">Z = s(s(s(s(s(0)))))
+</code></pre>
+
+
+    </section>
+    
+    <section>
+      
+  
+    <h3>Representing natural numbers (ctd.)</h3>
+  
+
+
+
+
+<p>We can also find an <em>X</em> such that the sum of <em>X</em> and <em>Y</em> is <em>Z</em> (i.e., subtract <em>Y</em> from <em>Z</em>):</p>
+<pre><code class="Prolog">?-add(X,s(s(s(0))),s(s(s(s(s(0)))))).
+</code></pre>
+
+<pre><code class="Prolog">X = s(s(0))
+</code></pre>
+
+
+    </section>
+    
+    <section>
+      
+  
+    <h3>Representing natural numbers (ctd.)</h3>
+  
+
+
+
+
+<p>We can even find all <em>X</em> and <em>Y</em> which add up to a given sum. Thus, this program is fully declarative. Similarly, multiplication is repeated addition:</p>
+
+<div class="extract swish" id="3.5.2">
+  <pre class="source swish temp inherit AutoStyle03" data-variant-id="group-1" id="swish.3.5.2" inherit-id="swish.3.5.1" query-text="?-mul(0,X,0). ?-mul(s(s(0)),s(s(s(0))),Z).">
+mul(0,_X,0).
+mul(s(X),Y,Z):-mul(X,Y,Z1),add(Y,Z1,Z).
+  </pre>
+</div>
+    </section>
+    
+    <section>
+      
+  
+    <h3>Why this is computationally inefficient</h3>
+  
+
+
+<p>There are two problems with this approach to representing and manipulating natural numbers. First, naming natural numbers by means of the constant symbol <code>0</code> and the functor <code>s</code> is very clumsy, especially for large numbers. Of course, it would be possible to write a translator from decimal notation to successor notation, and back. However, the second problem is more fundamental: multiplication as repeated addition is extremely inefficient compared to the algorithm for multiplicating numbers in decimal notation. Therefore, Prolog has built-in arithmetic facilities, which we will discuss now.</p>
+    </section>
+    
+    <section>
+      
+  
+    <h3>Evaluating arithmetic expressions</h3>
+  
+
+
+<p>Consider the arithmetic expression <code>5+7-3</code>. Prolog will view this expression as the term <code>+(5,-(7,3))</code>, with the functors <code>+</code> and <code>-</code> written as infix operators. We want to <em>evaluate</em> this expression, i.e. we want a single numerical value which represents somehow the same number as the expression. A program for doing this would look something like</p>
+<pre><code class="Prolog">is(V,E1+E2):-
+    is(V1,E1),is(V2,E2),
+    fast_add(V1,V2,V).
+is(V,E1-E2):-
+    is(V1,E1,),is(V2,E2),
+    fast_sub(V1,V2,V).
+is(E,E):-
+    number(E).
+</code></pre>
+
+
+    </section>
+    
+    <section>
+      
+  
+    <h3>Evaluating arithmetic expressions (ctd.)</h3>
+  
+
+
+
+
+<p>Here, <code>fast_add</code> and <code>fast_sub</code> represent the fast, built-in procedures for addition and subtraction, which are not directly available to the user. These procedures are <strong>not</strong> reversible: its first two arguments must be instantiated. Therefore, the predicate <code>is</code> will include a test for groundness of its second argument (the arithmetic expression), and will quit with an error-message if this test fails.</p>
+<p></p>
+    </section>
+    
+    <section>
+      
+  
+    <h3>Evaluation is one-way</h3>
+  
+
+
+<p>The <code>is</code> predicate is a built-in feature of Prolog, and is declared as an infix operator. Its behaviour is illustrated by the following queries:</p>
+<pre><code class="Prolog">?-X is 5+7-3
+  X = 9
+
+?-9 is 5+7-3
+  Yes
+
+?-9 is X+7-3
+  Error in arithmetic expression
+
+?-X is 5*3+7/2
+  X = 18.5
+</code></pre>
+
+
+<div class="extract swish" id="3.5.4">
+  <pre class="source swish temp AutoStyle03" data-variant-id="group-1" id="swish.3.5.4" query-text="?-X is 5+7-3. ?-9 is 5+7-3. ?-9 is X+7-3. ?-X is 5*3+7/2.">
+% Try these queries here.
+  </pre>
+</div>
+
+<p>The last example shows, that arithmetic expressions obey the usual precedence rules (which can be overruled using parentheses). Also, note that the <code>is</code> predicate can handle real numbers.</p>
+    </section>
+    
+    <section>
+      
+  
+    <h3>Evaluation vs. unification</h3>
+  
+
+
+<p>Prolog also provides a built-in predicate <code>=</code>, but this predicate behaves quite differently from <code>is</code>, since it performs <em>unification</em> rather than arithmetic evaluation (see also section 2.3). The following queries illustrate the operation of <code>=</code>:</p>
+
+    </section>
+    
+    <section>
+      
+  
+    <h3>Evaluation vs. unification (ctd.)</h3>
+  
+
+
+
+
+<pre><code class="Prolog">?-X = 5+7-3
+  X = 5+7-3
+
+?-9 = 5+7-3
+  No
+
+?-9 = X+7-3
+  No
+
+?-X = Y+7-3
+  X = _947+7-3
+  Y = _947
+
+?-X = f(X)
+  X = f(f(f(f(f(f(f(f(f(f(f(f(f(f(f(f(f(f(f(f(f(
+  f(f(f(f(f(f(f(f(f(f(f(f(f(f(f(f(f(f(f(f(f(f(f(
+  f(f(f(f(f(f(f(f(f(f(f(f(f(f(f(f(f(f(f(
+  Error: term being written is too deep
+</code></pre>
+
+
+<div class="extract swish" id="3.5.5">
+  <pre class="source swish temp AutoStyle03" data-variant-id="group-1" id="swish.3.5.5" query-text="?-X = 5+7-3. ?-9 = 5+7-3. ?-9 = X+7-3. ?-X = Y+7-3. ?-X = f(X).">
+% Try these queries here. Is the answer to the last query really as described here?
+  </pre>
+</div>
+
+
+    </section>
+    
+    <section>
+      
+  
+    <h3>Evaluation vs. unification (ctd.)</h3>
+  
+
+
+
+
+<p>The first query just unifies <code>X</code> with the term <code>5+7-3</code> (i.e. <code>+(5,-(7,3))</code>), which of course succeeds. In the second and third query, we try to unify a constant with a complex term, which fails. The fourth query succeeds, leaving <code>Y</code> unbound (<code>_947</code> is an internal variable name, generated by Prolog).</p>
+    </section>
+    
+    <section>
+      
+  
+    <h3>The occur check</h3>
+  
+
+
+<p>The fifth query illustrates that Prolog indeed omits the occur check (section 2.3) in unification: the query should have failed, but instead it succeeds, resulting in the circular binding { <code>X</code> &rarr; <code>f(X)</code> }. The problem only becomes apparent when Prolog tries to write the resulting term, which is infinite. Just to stress that Prolog quite happily constructs circular bindings, take a look at the following strange program:</p>
+<pre><code class="Prolog">strange:-X=f(X).
+</code></pre>
+
+<p>The query <code>?-strange</code> succeeds, and since there is no answer substitution, it is not apparent that there is a circular binding involved.</p>
+
+    </section>
+    
+    <section>
+      
+  
+    <h3>The occur check (ctd.)</h3>
+  
+
+
+
+
+
+<div class="extract exercise" id="3.9">
+  <div class="AutoStyle06">
+    <p class="exercise AutoStyle07">
+      <i>Exercise 3.9.</i> <p>Write a predicate <code>zero(A,B,C,X)</code> which, given the coefficients <em>a</em>, <em>b</em> and <em>c</em>, calculates both values of <em>x</em> for which <em>ax</em><sup>2</sup>+<em>bx</em>+<em>c</em>=0.</p>
+
+      
+    </p>
+  </div>
+</div>
+    </section>
+    
+    <section>
+      
+  
+    <h3>Inequalities</h3>
+  
+
+
+<p>Finally, we mention that Prolog provides a number of other useful arithmetic predicates, including the inequality tests <code>&lt;</code> and <code>&gt;</code>, and their reflexive counterparts <code>=&lt;</code> and <code>&gt;=</code>. For these tests, both arguments should be instantiated to numbers.</p>
+    </section>
+    
+  </section>
+  
+  <section>
+    
+    <section>
+      
+  
+    <h3>3.6 Accumulators</h3>
+  
+
+
+
+    </section>
+    
+    <section>
+      
+  
+    <h3>Literal ordering & efficiency</h3>
+  
+
+
+<p>The condition that the righthand-side of <code>is</code> should not contain variables sometimes determines the ordering of literals in the body of the clause. For instance, in the program below, which computes the length of a list, the <code>is</code> literal should be placed after the recursive <code>length</code> call, which instantiates <code>M</code>. This means that the resolvent first collects as many <code>is</code> literals as there are elements in the list, before doing the actual calculation. Each of these literals contains some &lsquo;local&rsquo; variables that require some space in memory. The total memory requirements are thus proportional to the depth of the recursion.</p>
+
+<div class="extract swish" id="3.6.0">
+  <pre class="source swish temp AutoStyle03" data-variant-id="group-1" id="swish.3.6.0" query-text="?-naive_length([a,b,c],N).">
+naive_length([],0).
+naive_length([_H|T],N):-naive_length(T,M),N is M+1.
+  </pre>
+</div>
+
+
+    </section>
+    
+    <section>
+      
+  
+    <h3>Literal ordering & efficiency (ctd.)</h3>
+  
+
+
+
+
+
+<div class="extract exercise" id="3.10">
+  <div class="AutoStyle06">
+    <p class="exercise AutoStyle07">
+      <i>Exercise 3.10.</i> <p>Draw the proof tree for the query <code>?-naive_length([a,b,c],N)</code>.</p>
+
+      
+    </p>
+  </div>
+</div>
+    </section>
+    
+    <section>
+      
+  
+    <h3>Achieving tail recursion with accumulators</h3>
+  
+
+
+<p>Programs with tail recursion need less memory because they do all the work on one recursive level before proceeding to the next. There is a common trick to transform even the <code>length</code> predicate above into a tail recursive program, using an auxiliary argument called an <em>accumulator</em>.</p>
+
+<div class="extract swish" id="3.6.1">
+  <pre class="source swish temp AutoStyle03" data-variant-id="group-1" id="swish.3.6.1" query-text="?-length_acc([a,b,c],N). ?-length_acc([a,b,c],0,N). ?-length_acc([a,b,c],3,N).">
+length_acc(L,N):-length_acc(L,0,N).
+
+length_acc([],N,N).
+length_acc([_H|T],N0,N):-N1 is N0+1,length_acc(T,N1,N).
+  </pre>
+</div>
+
+
+    </section>
+    
+    <section>
+      
+  
+    <h3>Achieving tail recursion with accumulators (ctd.)</h3>
+  
+
+
+
+
+<p><code>length_acc(L,N0,N)</code> is true if <code>N</code> is the number of elements in <code>L</code> plus <code>N0</code>. Initialising <code>N0</code> to <code>0</code> results in <code>N</code> returning the length of <code>L</code>. Note that the actual counting is done by the second argument: only when the list is empty is the third argument unified with the second argument. The main point is that, since the accumulator is given an initial value of <code>0</code>, it is always instantiated, such that the <code>is</code> literal can be placed before the recursive call.</p>
+
+    </section>
+    
+    <section>
+      
+  
+    <h3>Achieving tail recursion with accumulators (ctd.)</h3>
+  
+
+
+
+
+
+<div class="extract exercise" id="3.11">
+  <div class="AutoStyle06">
+    <p class="exercise AutoStyle07">
+      <i>Exercise 3.11.</i> <p>Draw the proof tree for the query <code>?-length_acc([a,b,c],N)</code>.</p>
+
+      
+    </p>
+  </div>
+</div>
+    </section>
+    
+    <section>
+      
+  
+    <h3>List reversal with accumulator</h3>
+  
+
+
+<p>Accumulators can be used in very many programs. Suppose we want to reverse the order of elements in a list. We could do this by recursively reversing the tail of the list, and putting the head at the end of the result:</p>
+
+<div class="extract swish" id="3.6.2">
+  <pre class="source swish temp AutoStyle03" data-variant-id="group-1" id="swish.3.6.2" query-text="?-naive_reverse([a,b,c],R).">
+naive_reverse([],[]).
+naive_reverse([H|T],R):-naive_reverse(T,R1),append(R1,[H],R).
+
+append([],Y,Y).
+append([H|T],Y,[H|Z]):-append(T,Y,Z).
+  </pre>
+</div>
+
+<p>This predicate is called &lsquo;naive&rsquo; because a lot of unnecessary work is done by the <code>append</code> calls in the recursive clause.</p>
+
+    </section>
+    
+    <section>
+      
+  
+    <h3>List reversal with accumulator (ctd.)</h3>
+  
+
+
+
+
+
+<div class="extract exercise" id="3.12">
+  <div class="AutoStyle06">
+    <p class="exercise AutoStyle07">
+      <i>Exercise 3.12.</i> <p>Draw the proof tree for the query <code>?-naive_reverse([a,b,c],R)</code>.</p>
+
+      
+    </p>
+  </div>
+</div>
+
+
+    </section>
+    
+    <section>
+      
+  
+    <h3>List reversal with accumulator (ctd.)</h3>
+  
+
+
+
+
+<p>By using an accumulator, we can get rid of the <code>append</code> predicate, as follows:</p>
+
+<div class="extract swish" id="3.6.3">
+  <pre class="source swish temp AutoStyle03" data-variant-id="group-1" id="swish.3.6.3" query-text="?-reverse([a,b,c],R). ?-reverse([a,b,c],[],R). ?-reverse([b,c],[a],R). ?-reverse([c],[b,a],R).">
+reverse(X,Y):- reverse(X,[],Y).
+
+reverse([],Y,Y).
+reverse([H|T],Y0,Y):- reverse(T,[H|Y0],Y).
+  </pre>
+</div>
+
+<p><code>reverse(X,Y0,Y)</code> is true if <code>Y</code> consists of the reversal of <code>X</code> followed by <code>Y0</code>. Initialising <code>Y0</code> to <code>[]</code> results in <code>Y</code> returning the reversal of <code>X</code>.</p>
+    </section>
+    
+    <section>
+      
+  
+    <h3>Difference lists</h3>
+  
+
+
+<p>The use of an accumulator in this more efficient program for reversing a list is closely related to another programming trick for increasing the efficiency of list handling. The idea is not to represent a list by a single term, but instead by a pair of terms <code>L1-L2</code>, such that the list actually represented is the <strong>difference</strong> between <code>L1</code> and <code>L2</code>. The term <code>L1-L2</code> is appropriately called a <em>difference list</em>; <code>L1</code> is called the <em>plus list</em>, and <code>L2</code> is called the <em>minus list</em>. 
+
+    </section>
+    
+    <section>
+      
+  
+    <h3>Difference lists (ctd.)</h3>
+  
+
+
+
+For instance, the difference list <code>[a,b,c,d]-[d]</code> represents the simple list <code>[a,b,c]</code>, as does the difference list <code>[a,b,c,1234,5678]-[1234,5678]</code>, and even the difference list <code>[a,b,c|X]-X</code>. The last difference list can be seen as summarising every possible difference list representing the same simple list, by introducing a variable for the part which is not contained in the simple list.</p>
+    </section>
+    
+    <section>
+      
+  
+    <h3>List reversal with difference lists</h3>
+  
+
+
+<p>As was remarked above, <code>reverse(X,Y0,Y)</code> is true if <code>Y</code> consists of the reversal of <code>X</code> followed by <code>Y0</code>. Another way to say the same thing is that the reversal of <code>X</code> is the difference between <code>Y</code> and <code>Y0</code>. That is, the reversal of <code>X</code> is represented by the difference list <code>Y-Y0</code>! We can make this explicit by a small syntactic change to <code>reverse</code>, resulting in the following program:</p>
+
+<div class="extract swish" id="3.6.4">
+  <pre class="source swish temp AutoStyle03" data-variant-id="group-1" id="swish.3.6.4" query-text="?-reverse_dl([a,b,c],R). ?-reverse([a,b,c],R-[]). ?-reverse([b,c],R-[a]). ?-reverse([c],R-[b,a]).">
+reverse_dl(X,Y):- reverse(X,Y-[]).
+
+reverse([],Y-Y).
+reverse([H|T],Y-Y0):- reverse(T,Y-[H|Y0]).
+  </pre>
+</div>
+
+
+    </section>
+    
+    <section>
+      
+  
+    <h3>List reversal with difference lists (ctd.)</h3>
+  
+
+
+
+
+<p>For instance, the third clause in this program says: if the reversal of <code>T</code> is represented by the difference list <code>Y-[H|Y0]</code>, then adding <code>H</code> to the head of <code>T</code> is the same as removing <code>H</code> from the minus list in the difference list.</p>
+    </section>
+    
+    <section>
+      
+  
+    <h3>Appending difference lists</h3>
+  
+
+
+<p>If the minus list is a variable, it can be used as a pointer to the end of the represented list. It is this property which makes difference lists so useful. For instance, if we unify <code>[a,b,c|X]-X</code> with <code>Y-[d,e]</code>, we get <code>Y=[a,b,c,d,e]</code> &mdash; we have managed to append two lists together in a single unification step! 
+
+    </section>
+    
+    <section>
+      
+  
+    <h3>Appending difference lists (ctd.)</h3>
+  
+
+
+
+In this example, the second term is not a difference list, nor is the result. If we want to append two difference lists</p>
+<pre><code class="Prolog">[a,b,c|XMinus]-XMinus
+</code></pre>
+
+<p>and</p>
+<pre><code class="Prolog">[d,e|YMinus]-YMinus
+</code></pre>
+
+<p>we must unify <code>XMinus</code> with <code>[d,e|YMinus]</code> (the plus list of the second difference list), such that the first difference list becomes</p>
+<pre><code class="Prolog">[a,b,c,d,e|YMinus]-[d,e|YMinus]
+</code></pre>
+
+<p>Combining the plus list of this difference list with <code>YMinus</code>, we get exactly what we want.</p>
+    </section>
+    
+    <section>
+      
+  
+    <h3>An O(1) append predicate</h3>
+  
+
+
+<p>In general, given two difference lists <code>XPlus-XMinus</code> and <code>YPlus-YMinus</code>, we unify <code>XMinus</code> with <code>YPlus</code>, and the result is given by <code>XPlus-YMinus</code> (fig. 3.13):</p>
+<pre><code class="Prolog">append_dl(XPlus-XMinus,YPlus-YMinus,XPlus-YMinus):-
+    XMinus=YPlus.
+</code></pre>
+
+<p>or even shorter</p>
+
+<div class="extract swish" id="3.6.5">
+  <pre class="source swish temp AutoStyle03" data-variant-id="group-1" id="swish.3.6.5" query-text="?-append_dl([a,b,c|X]-X,[d,e|Y]-Y,Z-Z0). ?-append_dl([a,b,c|X]-X,[d,e|Y]-Y,Z-[]).">
+append_dl(XPlus-YPlus,YPlus-YMinus,XPlus-YMinus).
+  </pre>
+</div>
+
+
+    </section>
+    
+    <section>
+      
+  
+    <h3>An O(1) append predicate (ctd.)</h3>
+  
+
+
+
+
+
+
+<div id="3.13">
+              <img src="img/figure/image046.svg" height="60%"/>
+          <p>
+            <b>Figure 3.13.</b> <p>Appending two difference lists: the &lsquo;length&rsquo; of <code>XMinus</code> is adjusted by unification with <code>YPlus</code>, the result is given by <code>XPlus-YMinus</code>.</p>
+          </p>
+</div>
+
+
+
+    </section>
+    
+    <section>
+      
+  
+    <h3>An O(1) append predicate (ctd.)</h3>
+  
+
+
+
+
+<p>Appending a simple list to another simple list of <em>n</em> elements requires <em>n</em> resolution steps; appending two difference lists requires no resolution at all, just one unification. Using difference lists is almost always a good idea if you have to do a lot of list processing.</p>
+
+    </section>
+    
+    <section>
+      
+  
+    <h3>An O(1) append predicate (ctd.)</h3>
+  
+
+
+
+
+
+<div class="extract exercise" id="3.13">
+  <div class="AutoStyle06">
+    <p class="exercise AutoStyle07">
+      <i>Exercise 3.13.</i> <p>In the <code>naive_reverse</code> predicate, represent the reversed list by a difference list, use <code>append_dl</code> instead of <code>append</code>, and show that this results in the predicate <code>reverse_dl</code> by unfolding the definition of <code>append_dl</code>.</p>
+
+      
+    </p>
+  </div>
+</div>
+    </section>
+    
+  </section>
+  
+  <section>
+    
+    <section>
+      
+  
+    <h3>3.7 Second-order predicates</h3>
+  
+
+
+
+    </section>
+    
+    <section>
+      
+  
+    <h3>Predicate variables</h3>
+  
+
+
+<p>Suppose we need a program to determine, given two lists of persons of equal length, whether a person in the first list is the parent of the corresponding person in the second list. The following program will do the job:</p>
+<pre><code class="Prolog">parents([],[]).
+parents([P|Ps],[C|Cs]):-
+    parent(P,C),
+    parents(Ps,Cs).
+</code></pre>
+
+
+    </section>
+    
+    <section>
+      
+  
+    <h3>Predicate variables (ctd.)</h3>
+  
+
+
+
+
+<p>We can generalise this program by including the relation which must hold between corresponding elements of the two lists as a parameter:</p>
+<pre><code class="Prolog">rel(R,[],[]).
+rel(R,[X|Xs],[Y|Ys]):-
+    R(X,Y),
+    rel(R,Xs,Ys).
+</code></pre>
+
+<p>A term like <code>R(X,Y)</code> is allowed at the position of an atom in the body of a clause, as long as it is correctly instantiated at the time it is called.</p>
+    </section>
+    
+    <section>
+      
+  
+    <h3>Univ =..</h3>
+  
+
+
+<p>Some Prolog interpreters don&rsquo;t allow this, in which case you must explicitly construct the literal by means of the built-in predicate &lsquo; <code>=..</code> &rsquo; (sometimes called <em>univ</em>). It is a fully declarative predicate, which can both be used to construct a term from a list of arguments preceded by a functor, or to decompose a term into its constituents:</p>
+<pre><code class="Prolog">?-Term =.. [parent,X,peter]
+  Term = parent(X,peter)
+
+?-parent(maria,Y) =.. List
+  List = [parent,maria,Y]
+</code></pre>
+
+<p>&lsquo; <code>=..</code> &rsquo; is declared as an infix operator in Prolog.</p>
+
+<div class="extract exercise" id="3.14">
+  <div class="AutoStyle06">
+    <p class="exercise AutoStyle07">
+      <i>Exercise 3.14.</i> <p>Rewrite the program for <code>rel</code>, using <code>=..</code></p>
+
+      
+    </p>
+  </div>
+</div>
+
+<p></p>
+    </section>
+    
+    <section>
+      
+  
+    <h3>Second-order predicates</h3>
+  
+
+
+<p>The predicate <code>rel</code> is called a <em>second-order</em> predicate, because it takes a (first-order) predicate as an argument<span class="CustomFootnote">
+  <a href="#_ftn11" name="_ftnref11" title="">
+      <span class="MsoFootnoteReference">
+        <span class="AutoStyle13">
+          <span class="AutoStyle14">
+            [11]
+          </span>
+        </span>
+     </span>
+   </a>
+</span>. We can now define the <code>parents</code> predicate as</p>
+<pre><code class="Prolog">parents(Ps,Cs):-rel(parent,Ps,Cs).
+</code></pre>
+
+
+    </section>
+    
+    <section>
+      
+  
+    <h3>Second-order predicates (ctd.)</h3>
+  
+
+
+
+
+<p>Suppose now you have the following facts in your program, and you want to collect all the children of a particular parent in a list:</p>
+
+<div class="extract swish" id="3.7.1">
+  <pre class="source swish temp AutoStyle03" data-variant-id="group-1" id="swish.3.7.1" query-text="">
+parent(john,peter).
+parent(john,paul).
+parent(john,mary).
+parent(mick,davy).
+parent(mick,dee).
+parent(mick,dozy).
+  </pre>
+</div>
+
+
+    </section>
+    
+    <section>
+      
+  
+    <h3>Second-order predicates (ctd.)</h3>
+  
+
+
+
+
+<p>Of course, it is easy to generate all the children upon backtracking; the problem is to collect them in a global list. To this end, Prolog provides the second-order predicates <code>findall</code>, <code>bagof</code>, and <code>setof</code>. For instance, we could use the following program and query:</p>
+
+<div class="extract swish" id="3.7.2">
+  <pre class="source swish temp inherit AutoStyle03" data-variant-id="group-1" id="swish.3.7.2" inherit-id="swish.3.7.1" query-text="">
+children(Parent,Children):- findall(C,parent(Parent,C),Children).
+  </pre>
+</div>
+
+<pre><code class="Prolog">?-children(john,Children).
+</code></pre>
+
+<pre><code class="Prolog">Children = [peter,paul,mary]
+</code></pre>
+
+
+    </section>
+    
+    <section>
+      
+  
+    <h3>Second-order predicates (ctd.)</h3>
+  
+
+
+
+
+<p>In general, the query</p>
+<pre><code class="Prolog">?-findall(X,Goal,ListofX)
+</code></pre>
+
+<p>generates all the possible solutions of the query <code>?‑Goal</code>, recording the substitutions for <code>X</code> for each of these solutions in the list <code>ListofX</code> (<code>Goal</code> must be instantiated to a term representing a Prolog goal).</p>
+    </section>
+    
+    <section>
+      
+  
+    <h3>Existential quantification</h3>
+  
+
+
+<p>The <code>bagof</code> predicate acts similarly. However, its behaviour is different when the goal contains free variables. Consider the query</p>
+<pre><code class="Prolog">?-bagof(C,parent(P,C),L)
+</code></pre>
+
+<p>in which the variable <code>P</code> is unbound. This query has two possible interpretations: &lsquo;find a parent and a list of his children&rsquo;, and &lsquo;find the list of children <em>that have a parent</em> &rsquo;. 
+
+    </section>
+    
+    <section>
+      
+  
+    <h3>Existential quantification (ctd.)</h3>
+  
+
+
+
+In the first case, we get a possible value for <code>P</code> and a list of <code>P</code> &rsquo;s children, which means that there are two solutions:</p>
+<pre><code class="Prolog">?-bagof(C,parent(P,C),L).
+</code></pre>
+
+<pre><code class="Prolog">  C = _951
+  P = john
+  L = [peter,paul,mary];
+
+  C = _951
+  P = mick
+  L = [davy,dee,dozy]
+</code></pre>
+
+
+    </section>
+    
+    <section>
+      
+  
+    <h3>Existential quantification (ctd.)</h3>
+  
+
+
+
+
+<p>In the second case, the goal to prove is &lsquo;there exists a <code>P</code> such that <code>parent(P,C)</code> is true&rsquo;, which means that the variable <code>P</code> is existentially quantified. This is signalled by prefixing the goal with <code>P^</code>:</p>
+<pre><code class="Prolog">?-bagof(C,P^parent(P,C),L).
+</code></pre>
+
+<pre><code class="Prolog">  C = _957
+  P = _958
+  L = [peter,paul,mary,davy,dee,dozy]
+</code></pre>
+
+<p>The query</p>
+<pre><code class="Prolog">?-findall(C,parent(P,C),L).
+</code></pre>
+
+<p>(without existential quantification) can only generate this second solution.</p>
+    </section>
+    
+    <section>
+      
+  
+    <h3>setof/3</h3>
+  
+
+
+<p>Finally, Prolog provides the predicate <code>setof</code>, which acts just like <code>bagof</code>, except that the resulting list is sorted and does not contain duplicates. Thus, <code>setof</code> is slightly less efficient than <code>bagof</code>, and the latter is preferred in cases where the list of solutions is known not to contain duplicates.</p>
+
+<div class="extract exercise" id="3.15">
+  <div class="AutoStyle06">
+    <p class="exercise AutoStyle07">
+      <i>Exercise 3.15.</i> <p>Write a program which sorts and removes duplicates from a list, using <code>setof</code>.</p>
+
+      
+    </p>
+  </div>
+</div>
+    </section>
+    
+  </section>
+  
+  <section>
+    
+    <section>
+      
+  
+    <h3>3.8 Meta-programs</h3>
+  
+
+
+
+    </section>
+    
+    <section>
+      
+  
+    <h3>Object-level and meta-level</h3>
+  
+
+
+<p>Prolog represents a clause <code>Head:-Body</code> in the same way as a term <code>:-(Head,Body)</code>. Thus, it is easy to write programs that manipulate clauses. In the first case, &lsquo; <code>:-</code> &rsquo; is treated as a predicate, and in the second case it is treated as a functor. The combination of these two interpretations occurs frequently in Prolog programs, and can be applied to any predicate <code>p</code>. 
+
+    </section>
+    
+    <section>
+      
+  
+    <h3>Object-level and meta-level (ctd.)</h3>
+  
+
+
+
+Such programs are called <em>meta-programs</em>; the interpretation of <code>p</code> as a predicate occurs on the <em>object-level</em>, and the interpretation as a functor occurs on the <em>meta-level</em>. (Note that the difference between meta-predicates and higher-order predicates is that meta-predicates take object-level <em>clauses</em> as arguments, while the latter take lower-order <em>predicates</em> as arguments.)</p>
+    </section>
+    
+    <section>
+      
+  
+    <h3>A propositional meta-interpreter</h3>
+  
+
+
+<p>For instance, suppose we have the following biological knowledge, expressed as propositional if-then rules:</p>
+
+<div class="extract swish" id="3.8.1">
+  <pre class="source swish temp AutoStyle03" data-variant-id="group-1" id="swish.3.8.1" query-text="?-if tweety then C. ?-if A and lays_eggs then is_bird.">
+% if A and B then C means if(then(and(A,B),C))
+:-op(900,fx,if).
+:-op(800,xfx,then).
+:-op(700,yfx,and).
+% object-level rules
+if has_feathers and lays_eggs then is_bird.
+if has_gills and lays_eggs then is_fish.
+if tweety then has_feathers.
+if tweety then lays_eggs.
+  </pre>
+</div>
+
+
+    </section>
+    
+    <section>
+      
+  
+    <h3>A propositional meta-interpreter (ctd.)</h3>
+  
+
+
+
+
+<p>Suppose we want to prove that Tweety is a bird. That is, we want to show that the rule</p>
+<pre><code class="Prolog">if tweety then is_bird
+</code></pre>
+
+<p>follows logically from the given rules. 
+
+    </section>
+    
+    <section>
+      
+  
+    <h3>A propositional meta-interpreter (ctd.)</h3>
+  
+
+
+
+This can be done by a meta-program, which manipulates the rules on the object-level:</p>
+
+<div class="extract swish" id="3.8.2">
+  <pre class="source swish temp inherit AutoStyle03" data-variant-id="group-1" id="swish.3.8.2" inherit-id="swish.3.8.1" query-text="?-derive(if tweety then is_bird). ?-derive(if tweety then C). ?-derive(if A then is_bird).">
+% meta-program
+derive(if Assumptions then Goal):-
+  if Body then Goal,
+  derive(if Assumptions then Body).
+derive(if Assumptions then Goal1 and Goal2):-
+  derive(if Assumptions then Goal1),
+  derive(if Assumptions then Goal2).
+derive(if Assumptions then Goal):-
+  assumed(Goal,Assumptions).
+
+assumed(A,A).
+assumed(A,A and _As).
+assumed(A,_B and As):- assumed(A,As).
+  </pre>
+</div>
+
+
+    </section>
+    
+    <section>
+      
+  
+    <h3>A propositional meta-interpreter (ctd.)</h3>
+  
+
+
+
+
+<p>The three clauses for the <code>derive</code> predicate represent the three possible cases:</p>
+<ol>
+<li>a goal matches the head of a rule, in which case we should proceed with the body;</li>
+<li>a goal is a conjunction (for instance, because it was produced in the previous step), of which each conjunct is derived separately;</li>
+<li>a goal is among the assumptions.</li>
+</ol>
+<p>As explained above, <code>if</code> is a predicate on the object-level, and a functor on the meta-level.</p>
+
+    </section>
+    
+    <section>
+      
+  
+    <h3>A propositional meta-interpreter (ctd.)</h3>
+  
+
+
+
+
+
+<div class="extract exercise" id="3.16">
+  <div class="AutoStyle06">
+    <p class="exercise AutoStyle07">
+      <i>Exercise 3.16.</i> <p>Draw the SLD-tree for the query</p>
+<p><code>?-derive(if tweety then is_bird).</code></p>
+
+      
+    </p>
+  </div>
+</div>
+    </section>
+    
+    <section>
+      
+  
+    <h3>Towards a meta-interpreter for Prolog</h3>
+  
+
+
+<p>Since propositional definite clauses are similar to the above if-then rules, one could view this program as a propositional Prolog simulator. In fact, it is possible to push the resemblance closer, by adopting the Prolog-representation of clauses at the object-level. 
+
+    </section>
+    
+    <section>
+      
+  
+    <h3>Towards a meta-interpreter for Prolog (ctd.)</h3>
+  
+
+
+
+One minor complication is that the clause constructor &lsquo; <code>:-</code> &rsquo; is not directly available as an object-level predicate. Instead, Prolog provides the built-in predicate <code>clause</code>: a query <code>?‑clause(H,B)</code> succeeds if <code>H:-B</code> unifies with a clause in the internal Prolog database (if <code>H</code> unifies with a fact, <code>B</code> is unified with <code>true</code>). 
+
+    </section>
+    
+    <section>
+      
+  
+    <h3>Towards a meta-interpreter for Prolog (ctd.)</h3>
+  
+
+
+
+A further modification with respect to the above program is that Prolog queries do not have the form <code>if Assumptions then Goal</code>; instead, the <code>Assumptions</code> are added to the object-level program, from which a proof of <code>Goal</code> is attempted.</p>
+    </section>
+    
+    <section>
+      
+  
+    <h3>The vanilla Prolog meta-interpreter</h3>
+  
+
+
+<p>Following these observations, the predicate <code>derive</code> is changed as follows:</p>
+<pre><code class="Prolog">prove(Goal):-
+  clause(Goal,Body),
+  prove(Body).
+prove((Goal1,Goal2)):-
+  prove(Goal1),
+  prove(Goal2).
+prove(true).
+</code></pre>
+
+
+    </section>
+    
+    <section>
+      
+  
+    <h3>The vanilla Prolog meta-interpreter (ctd.)</h3>
+  
+
+
+
+
+<p>This program nicely reflects the process of constructing a resolution proof:</p>
+<ol>
+<li>if the resolvent contains a single atom, find a clause with that atom in the head and proceed with its body;</li>
+<li>if the resolvent contains various atoms, start with the first and proceed with the rest;</li>
+<li>if the resolvent is empty, we&rsquo;re done.</li>
+</ol>
+
+    </section>
+    
+    <section>
+      
+  
+    <h3>The vanilla Prolog meta-interpreter (ctd.)</h3>
+  
+
+
+
+
+<p>Some Prolog interpreters have problems if <code>clause</code> is called with the first argument instantiated to <code>true</code> or a conjunction, because <code>true</code> and &lsquo; <code>,</code> &rsquo; (comma) are built-in predicates. To avoid these problems, we should add the conditions <code>not A=true</code> and <code>not A=(X,Y)</code> to the first clause. A less declarative solution is to reorder the clauses and use cuts:</p>
+<pre><code class="Prolog">prove(true):-!.
+prove((A,B)):-!,
+  prove(A),
+  prove(B).
+prove(A):-
+  /* not A=true, not A=(X,Y) */
+  clause(A,B),
+  prove(B).
+</code></pre>
+
+<p></p>
+    </section>
+    
+    <section>
+      
+  
+    <h3>Handling variables explicitly</h3>
+  
+
+
+<p>A meta-program interpreting programs in the same language in which it is written is called a <em>meta-interpreter</em>. In order to &lsquo;lift&rsquo; this propositional meta-interpreter to clauses containing variables, it is necessary to incorporate unification into the third clause. 
+
+    </section>
+    
+    <section>
+      
+  
+    <h3>Handling variables explicitly (ctd.)</h3>
+  
+
+
+
+Suppose we are equipped with predicates <code>unify</code> and <code>apply</code>, such that <code>unify(T1,T2,MGU,T)</code> is <strong>true</strong> if <code>T</code> is the result of unifying <code>T1</code> and <code>T2</code> with most general unifier <code>MGU</code>, and <code>apply(T,Sub,TS)</code> is <strong>true</strong> if <code>TS</code> is the term obtained from <code>T</code> by applying substitution <code>Sub</code>. The meta-interpreter would then look like this:</p>
+<pre><code class="Prolog">prove_var(true):-!.
+prove_var((A,B)):-!,
+  prove(A),
+  prove(B).
+prove_var(A):-
+  clause(Head,Body),
+  unify(A,Head,MGU,Result),
+  apply(Body,MGU,NewBody),
+  prove_var(NewBody).
+</code></pre>
+
+
+    </section>
+    
+    <section>
+      
+  
+    <h3>Handling variables explicitly (ctd.)</h3>
+  
+
+
+
+
+<p>Prolog&rsquo;s own unification predicate <code>=</code> does not return the most general unifier explicitly, but rather unifies the two original terms implicitly. Therefore, if we want to use the built-in unification algorithm in our meta-interpreter, we do not need the <code>apply</code> predicate, and we can write the third clause as</p>
+<pre><code class="Prolog">prove_var(A):-
+  clause(Head,Body),
+  A=Head,
+  prove_var(Body)
+</code></pre>
+
+
+    </section>
+    
+    <section>
+      
+  
+    <h3>Handling variables explicitly (ctd.)</h3>
+  
+
+
+
+
+<p>If we now change the explicit unification in the body of this clause to an implicit unification in the head, we actually obtain the propositional meta-interpreter again! That is, while this program is read <strong>declaratively</strong> as a meta-interpreter for propositional programs, it nevertheless operates <strong>procedurally</strong> as an interpreter of first-order clauses (fig. 3.14).</p>
+<p>Note that this meta-interpreter is able to handle only &lsquo;pure&rsquo; Prolog programs, without system predicates like cut or <code>is</code>, since there are no explicit clauses for such predicates.</p>
+
+    </section>
+    
+    <section>
+      
+  
+    <h3>Handling variables explicitly (ctd.)</h3>
+  
+
+
+
+
+
+
+<div id="3.14">
+              <img src="img/figure/image048.svg" height="60%"/>
+          <p>
+            <b>Figure 3.14.</b> <p>The <code>prove</code> meta-interpreter embodies a declarative implementation of the resolution proof procedure, making use of built-in unification.</p>
+          </p>
+</div>
+
+
+
+    </section>
+    
+    <section>
+      
+  
+    <h3>Handling variables explicitly (ctd.)</h3>
+  
+
+
+
+
+
+<div class="extract exercise" id="3.17">
+  <div class="AutoStyle06">
+    <p class="exercise AutoStyle07">
+      <i>Exercise 3.17.</i> <p>Draw the SLD-tree for the query <code>?-prove(is_bird(X))</code>, given the following clauses:<br></p>
+
+      <p><code>is_bird(X):-has_feathers(X),lays_eggs(X).
+is_fish(X):-has_gills(X),lays_eggs(X).
+has_feathers(tweety).
+lays_eggs(tweety).</code></p>
+    </p>
+  </div>
+</div>
+    </section>
+    
+    <section>
+      
+  
+    <h3>Adapting the meta-interpreter</h3>
+  
+
+
+<p>A variety of meta-interpreters will be encountered in this book. Each of them is a variation of the above &lsquo;canonical&rsquo; meta-interpreter in one of the following senses:</p>
+<ol>
+<li>application of a different search strategy;</li>
+<li>application of a different proof procedure;</li>
+<li>enlargement of the set of clauses that can be handled;</li>
+<li>extraction of additional information from the proof process.</li>
+</ol>
+
+    </section>
+    
+    <section>
+      
+  
+    <h3>Adapting the meta-interpreter (ctd.)</h3>
+  
+
+
+
+
+<p>
+Here, we will give two example variations. In the first example, we change the meta-interpreter in order to handle general clauses by means of negation as failure (case 3). All we have to do is to add the following clause:</p>
+<pre><code class="Prolog">prove(not A):-
+  not prove(A)
+</code></pre>
+
+<p>This clause gives a declarative description of negation as failure.</p>
+    </section>
+    
+    <section>
+      
+  
+    <h3>Extracting a proof tree</h3>
+  
+
+
+<p>The second variation extracts additional information from the SLD proof procedure by means of a proof tree (case 4). To this end, we need to make a slight change to the meta-interpreter given above. The reason for this is that the second clause of the original meta-interpreter breaks up the current resolvent if it is a conjunction, whereas in a proof tree we want the complete resolvent to appear.</p>
+
+    </section>
+    
+    <section>
+      
+  
+    <h3>Extracting a proof tree (ctd.)</h3>
+  
+
+
+
+
+<pre><code class="Prolog">% meta-interpreter with complete resolvent
+prove_r(true):-!.
+prove_r((A,B)):-!,
+  clause(A,C),
+  conj_append(C,B,D),
+  prove_r(D).
+prove_r(A):-
+  clause(A,B),
+  prove_r(B).
+%%% conj_append/3: see Appendix A.2
+</code></pre>
+
+
+    </section>
+    
+    <section>
+      
+  
+    <h3>Extracting a proof tree (ctd.)</h3>
+  
+
+
+
+
+<p>We now extend <code>prove_r/1</code> with a second argument, which returns the proof tree as a list of pairs <code>p(Resolvent,Clause)</code>:</p>
+
+<div class="extract swish" id="3.8.2_2">
+  <pre class="source swish temp AutoStyle03" data-variant-id="group-1" id="swish.3.8.2_2" query-text="?-prove_p(student_of(S,T)). ?-prove_p(is_bird(X)).">
+% display a proof tree
+prove_p(A):-prove_p(A,P),write_proof(P).
+
+% prove_p(A,P) <- P is proof tree of A
+prove_p(true,[]):-!.
+prove_p((A,B),[p((A,B),(A:-C))|Proof]):-!,
+  clause(A,C),
+  conj_append(C,B,D),
+  prove_p(D,Proof).
+prove_p(A,[p(A,(A:-B))|Proof]):-
+  clause(A,B),
+  prove_p(B,Proof).
+
+write_proof([]):-
+  write('...............[]'),nl.
+write_proof([p(A,B)|Proof]):-
+  write((:-A)),nl,
+  write('.....|'),write('..........'),write(B),nl,
+  write('.....|'),write('..................../'),nl,
+  write_proof(Proof).
+  </pre>
+</div>
+
+
+    </section>
+    
+    <section>
+      
+  
+    <h3>Extracting a proof tree (ctd.)</h3>
+  
+
+
+
+
+<p>For instance, given the following clauses:</p>
+<pre><code class="Prolog">student_of(S,T):-teaches(T,C),follows(S,C).
+teaches(peter,cs).
+teaches(peter,ai).
+follows(maria,cs).
+follows(paul,ai).
+</code></pre>
+
+<p>and the query <code>?-prove_p(student_of(S,T))</code>, the program writes the following proof trees:</p>
+
+    </section>
+    
+    <section>
+      
+  
+    <h3>Extracting a proof tree (ctd.)</h3>
+  
+
+
+
+
+<pre><code class="Prolog">:-student_of(peter,maria)
+    |         student_of(peter,maria):-teaches(peter,cs),follows(maria,cs)
+    |                   /
+:-(teaches(peter,cs),follows(maria,cs))
+    |         teaches(peter,cs):-true
+    |                   /
+:-follows(maria,cs)
+    |         follows(maria,cs):-true
+    |                   /
+              []
+
+:-student_of(peter,paul)
+    |         student_of(peter,paul):-teaches(peter,ai),follows(paul,ai)
+    |                   /
+:-(teaches(peter,ai),follows(paul,ai))
+    |         teaches(peter,ai):-true
+    |                   /
+:-follows(paul,ai)
+    |         follows(paul,ai):-true
+    |                   /
+              []
+</code></pre>
+    </section>
+    
+    <section>
+      
+  
+    <h3>Making the proof tree first-order</h3>
+  
+
+
+<p>Note that these are propositional proof trees, in the sense that all substitutions needed for the proof have already been applied. If we want to collect the uninstantiated program clauses in the proof tree then we should make a copy of each clause, before it is used in the proof:</p>
+<pre><code class="Prolog">prove_p((A,B),[p((A,B),Clause)|Proof]):-!,
+  clause(A,C),
+  copy_term((A:-C),Clause), % make copy of the clause
+  conj_append(C,B,D),
+  prove_p(D,Proof)
+</code></pre>
+
+<p>The predicate <code>copy_term/2</code> makes a copy of a term, with all variables replaced by new ones. It is a built-in predicate in many Prolog interpreters, but could be defined by means of <code>assert/2</code> and <code>retract/2</code> (see Appendix A.2 for details).</p>
+    </section>
+    
+  </section>
+  
+  <section>
+    
+    <section>
+      
+  
+    <h3>3.9 A methodology of Prolog programming</h3>
+  
+
+
+
+    </section>
+    
+    <section>
+      
+  
+    <h3>How to get started writing a predicate</h3>
+  
+
+
+<p>At the end of this chapter, we spend a few words on the <em>methodology</em> of writing Prolog programs. Given a problem to solve, how do I obtain the program solving the problem? This is the fundamental problem of software engineering. Here, we can only scratch the surface of this question: we will concentrate on the subtask of writing relatively simple predicates which use no more than two other predicates.</p>
+    </section>
+    
+    <section>
+      
+  
+    <h3>Partitioning a list</h3>
+  
+
+
+<p>Consider the following problem: define a predicate which, given a number <em>n</em>, partitions a list of numbers into two lists: one containing numbers smaller than <em>n</em>, and the other containing the rest. So we need a predicate <code>partition/4</code>:</p>
+<pre><code class="Prolog">% partition(L,N,Littles,Bigs) &amp;lt;- Littles contains numbers
+%                               in L smaller than N,
+%                               Bigs contains the rest
+</code></pre>
+
+
+    </section>
+    
+    <section>
+      
+  
+    <h3>Partitioning a list (ctd.)</h3>
+  
+
+
+
+
+<p>Since the only looping structure of Prolog is recursion, simple predicates like this will typically be recursive. This means that</p>
+<ol>
+<li>there is a <em>base case</em>, and one or more recursive clauses;</li>
+<li>there is a <em>recursion argument</em> distinguishing between the base case and the recursive clauses.</li>
+</ol>
+<p>For list predicates, the recursion argument is typically a list, and the distinction is typically between empty and non-empty lists. For the <code>partition/4</code> predicate, the recursion argument is the first list. The base case is easily identified: the empty list is partitioned in two empty lists, no matter the value of <code>N</code>. This gives us the following <em>skeleton</em>:</p>
+
+    </section>
+    
+    <section>
+      
+  
+    <h3>Partitioning a list (ctd.)</h3>
+  
+
+
+
+
+<pre><code class="Prolog">partition([],N,[],[]).
+partition([Head|Tail],N,?Littles,?Bigs):-
+  /* do something with Head */
+  partition(Tail,N,Littles,Bigs).
+</code></pre>
+
+<p>The question marks denote <em>output arguments</em>, whose relation to the variables in the recursive call still has to be decided. It should be noted that not all predicates are tail recursive, so it is not yet known whether the recursive call will be last indeed. Notice also that the output arguments in the recursive call have been given meaningful names, which is, in general, a good idea.</p>
+    </section>
+    
+    <section>
+      
+  
+    <h3>Finishing partition/4</h3>
+  
+
+
+<p>Once we have &lsquo;chopped off&rsquo; the first number in the list, we have to do something with it. Depending on whether it is smaller than <code>N</code> or not, it has to  be added to the <code>Littles</code> or the <code>Bigs</code>. Suppose <code>Head</code> is smaller than <code>N</code>:</p>
+<pre><code class="Prolog">partition([Head|Tail],N,?Littles,?Bigs):-
+  Head &lt; N,
+  partition(Tail,N,Littles,Bigs)
+</code></pre>
+
+<p>Thus, <code>Head</code> must be added to <code>Littles</code>. In this case, it does not matter in which position it is added: obviously, the most simple way is to add it to the head of the list:</p>
+<pre><code class="Prolog">?Littles = [Head|Littles]
+</code></pre>
+
+
+    </section>
+    
+    <section>
+      
+  
+    <h3>Finishing partition/4 (ctd.)</h3>
+  
+
+
+
+
+<p>In such cases, where output arguments are simply constructed by unification, the unification is performed implicitly in the head of the clause (the fourth argument remains unchanged):</p>
+<pre><code class="Prolog">partition([Head|Tail],N,[Head|Littles],Bigs):-
+  Head &lt; N,
+  partition(Tail,N,Littles,Bigs)
+</code></pre>
+
+
+    </section>
+    
+    <section>
+      
+  
+    <h3>Finishing partition/4 (ctd.)</h3>
+  
+
+
+
+
+<p>A second recursive clause is needed to cover the case that <code>Head</code> is larger than or equal to <code>N</code>, in which case it must be added to <code>Bigs</code>. The final program looks as follows:</p>
+
+<div class="extract swish" id="3.9.1">
+  <pre class="source swish temp AutoStyle03" data-variant-id="group-1" id="swish.3.9.1" query-text="?-partition([1,9,6,3,5],5,Littles,Bigs). ?-partition([11,7,5],5,Littles,Bigs).">
+% partition(L,N,Littles,Bigs) <- Littles contains numbers
+%                                in L smaller than N,
+%                                Bigs contains the rest
+partition([],_N,[],[]).
+partition([Head|Tail],N,[Head|Littles],Bigs):-
+  Head < N,
+  partition(Tail,N,Littles,Bigs).
+partition([Head|Tail],N,Littles,[Head|Bigs]):-
+  Head >= N,
+  partition(Tail,N,Littles,Bigs).
+  </pre>
+</div>
+    </section>
+    
+    <section>
+      
+  
+    <h3>General strategy</h3>
+  
+
+
+<p>The approach taken here can be formulated as a general strategy for writing Prolog predicates. The steps to be performed according to this strategy are summarised below:</p>
+<ol>
+<li>write down a declarative specification;</li>
+<li>identify the recursion argument, and the output arguments;</li>
+<li>write down a skeleton;</li>
+<li>complete the bodies of the clauses;</li>
+<li>fill in the output arguments.</li>
+</ol>
+<p>Notice that step (4) comprises most of the work, while the other steps are meant to make this work as easy as possible.</p>
+
+    </section>
+    
+    <section>
+      
+  
+    <h3>General strategy (ctd.)</h3>
+  
+
+
+
+
+
+<div class="extract exercise" id="3.18">
+  <div class="AutoStyle06">
+    <p class="exercise AutoStyle07">
+      <i>Exercise 3.18.</i> <p>Implement a predicate <code>permutation/2</code>, such that <code>permutation(L,P)</code> is true if <code>P</code> contains the same elements as the list <code>L</code> but (possibly) in a different order, following these steps. (One auxiliary predicate is needed.)</p>
+
+      
+    </p>
+  </div>
+</div>
+    </section>
+    
+    <section>
+      
+  
+    <h3>Sorting a list</h3>
+  
+
+
+<p>As a second example, consider the problem of sorting a list of numbers. The declarative specification is as follows:</p>
+<pre><code class="Prolog">%mySort(L,S) &lt;- S is a sorted permutation of list L
+</code></pre>
+
+<p>Note that this specification can immediately be translated to Prolog:</p>
+<pre><code class="Prolog">mySort(L,S):-
+  permutation(L,S),
+  sorted(S).
+</code></pre>
+
+
+    </section>
+    
+    <section>
+      
+  
+    <h3>Sorting a list (ctd.)</h3>
+  
+
+
+
+
+<p>This program first guesses a permutation of <code>L</code>, and then checks if the permutation happens to be sorted. Declaratively, this program is correct; procedurally, it is extremely inefficent since there are <em>n</em>! different permutations of a list of length <em>n</em>. Thus, we have to think of a more efficient algorithm.</p>
+    </section>
+    
+    <section>
+      
+  
+    <h3>Finishing sort/2</h3>
+  
+
+
+<p>The recursion and output arguments are easily identified as the first and second argument, respectively. The base case states that the empty list is already sorted, while the recursive clause states that a non-empty list is sorted by sorting its tail separately:</p>
+<pre><code class="Prolog">mySort([],[]).
+mySort([Head|Tail],?Sorted):-
+  /* do something with Head */
+  mySort(Tail,Sorted).
+</code></pre>
+
+
+    </section>
+    
+    <section>
+      
+  
+    <h3>Finishing sort/2 (ctd.)</h3>
+  
+
+
+
+
+<p>It remains to decide what the relation is between <code>?Sorted</code>, <code>Head</code> and <code>Sorted</code>. Obviously, <code>Head</code> cannot be simply added to the front of <code>Sorted</code>, but has to be inserted in the proper place. We thus need an auxiliary predicate <code>insert/3</code>, to add <code>Head</code> at the proper position in <code>Sorted</code>. Note that tail  recursion is not applicable in this case, since we have to insert <code>Head</code> in an already sorted list. We thus arrive at the following definition:</p>
+
+<div class="extract swish" id="3.9.2">
+  <pre class="source swish temp AutoStyle03" data-variant-id="group-1" id="swish.3.9.2" query-text="?-mySort([3,6,2,8,1],Sorted). ?-mySort([6,5,4,3,2,1],Sorted).">
+mySort([],[]).
+mySort([Head|Tail],WholeSorted):-
+  mySort(Tail,Sorted),
+  insert(Head,Sorted,WholeSorted).
+  </pre>
+</div>
+    </section>
+    
+    <section>
+      
+  
+    <h3>Implementing insert/3</h3>
+  
+
+
+<p>In order to implement <code>insert/3</code>, we follow the same steps. The second argument is the recursion argument, and the third is the output argument. This gives the following skeleton:</p>
+<pre><code class="Prolog">insert(X,[],?Inserted).
+insert(X,[Head|Tail],?Inserted):-
+  /* do something with Head */
+  insert(X,Tail,Inserted).
+</code></pre>
+
+
+    </section>
+    
+    <section>
+      
+  
+    <h3>Implementing insert/3 (ctd.)</h3>
+  
+
+
+
+
+<p>The base case is simple: <code>?Inserted = [X]</code>. In the recursive clause, we have to compare <code>X</code> and <code>Head</code>. Suppose <code>X</code> is greater than <code>Head</code>:</p>
+<pre><code class="Prolog">insert(X,[Head|Tail],?Inserted):-
+  X &gt; Head,
+  insert(X,Tail,Inserted)
+</code></pre>
+
+<p>We have to construct the output argument <code>?Inserted</code>. Since <code>X</code> has already been properly inserted to <code>Tail</code>, it remains to add <code>Head</code> to the front of <code>Inserted</code>:</p>
+<pre><code class="Prolog">?Inserted = [Head|Inserted]
+</code></pre>
+
+
+    </section>
+    
+    <section>
+      
+  
+    <h3>Implementing insert/3 (ctd.)</h3>
+  
+
+
+
+
+<p>A third clause is needed if <code>X</code> is not greater than <code>Head</code> (note that this clause, being non-recursive, is a second base case):</p>
+<pre><code class="Prolog">insert(X,[Head|Tail],?Inserted):-
+  X =&lt; Head
+</code></pre>
+
+<p>In this case, <code>X</code> should be added before <code>Head</code>:</p>
+<pre><code class="Prolog">?Inserted = [X,Head|Tail]
+</code></pre>
+
+
+    </section>
+    
+    <section>
+      
+  
+    <h3>Implementing insert/3 (ctd.)</h3>
+  
+
+
+
+
+<p>The complete program is given below:</p>
+
+<div class="extract swish" id="3.9.3">
+  <pre class="source swish temp AutoStyle03" data-variant-id="group-1" id="swish.3.9.3" query-text="?-insert(4,[2,3,5,7],Inserted). ?-insert(1,[2,3,5,7],Inserted). ?-insert(8,[2,3,5,7],Inserted).">
+insert(X,[],[X]).
+insert(X,[Head|Tail],[Head|Inserted]):-
+  X > Head,
+  insert(X,Tail,Inserted).
+insert(X,[Head|Tail],[X,Head|Tail]):-
+  X =< Head.
+  </pre>
+</div>
+
+
+    </section>
+    
+    <section>
+      
+  
+    <h3>Implementing insert/3 (ctd.)</h3>
+  
+
+
+
+
+
+<div class="extract exercise" id="3.19">
+  <div class="AutoStyle06">
+    <p class="exercise AutoStyle07">
+      <i>Exercise 3.19.</i> <p>Implement an alternative to this sorting method by using the <code>partition/4</code> predicate.</p>
+
+      
+    </p>
+  </div>
+</div>
+    </section>
+    
+  </section>
+  
+
+
+      </div>
+    </div>
+
+    <script>
+      $(function() { $(".swish").LPN({swish:"https://swish.simply-logical.space/"}); });
+    </script>
+
+    <script src="/web/lib/js/head.min.js"></script>
+    <script src="/web/js/reveal.js"></script>
+    <script>
+      Reveal.initialize({
+        history: true,
+        math: {
+          // mathjax: 'https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js',
+          config: 'TeX-AMS_HTML-full'
+        },
+
+        dependencies: [
+        { src: '/web/plugin/math/math.js', async: true },
+
+        // Interpret Markdown in <section> elements
+        { src: '/web/plugin/markdown/marked.js', condition: function() { return !!document.querySelector( '[data-markdown]' ); } },
+        { src: '/web/plugin/markdown/markdown.js', condition: function() { return !!document.querySelector( '[data-markdown]' ); } },
+          // Zoom in and out with Alt+click
+        { src: '/web/plugin/zoom-js/zoom.js', async: true },
+        // Speaker notes
+        { src: '/web/plugin/notes/notes.js', async: true },
+        // External HTML files
+        { src: '/web/plugin/external/external.js', condition: function() { return !!document.querySelector( '[data-external]' ); } }
+
+        ]
+      });
+    </script>
+
+    <div class="reveal" style="margin-top: -50px; padding-top: 50px;">
+  <div style="position: absolute; bottom: 1em; width: 100%; font-size: 0.4em; text-align: center;">
+    Peter Flach | http://www.cs.bris.ac.uk/~flach/SimplyLogical.html
+  </div>
+<div class="slides">
+
+  </body>
+
+</html>
